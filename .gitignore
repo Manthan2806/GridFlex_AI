@@ -1,0 +1,73 @@
+# Build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Node artifacts
+node_modules/
+.npm/
+.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS-generated files
+Thumbs.db
+*.tmp
+*.bak
+
+# Logs
+*.log
+logs/
+logs/*.log
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+local_*.db
+
+# Large generated data
+# Note: do NOT ignore the entire data/ directory.
+# Raw and processed datasets may need controlled handling.
+# Ignore only large generated outputs where appropriate.
+data/raw/*
+data/processed/*
+data/synthetic/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/synthetic/.gitkeep
+
+# Generated experiment outputs
+experiments/results/*
+!experiments/results/.gitkeep
+
+# Generated schemas
+contracts/schemas/*
+!contracts/schemas/.gitkeep
+
+# Test/coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Docker
+docker-compose.override.yml
