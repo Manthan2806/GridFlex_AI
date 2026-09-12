@@ -178,10 +178,14 @@ python scripts/run_mvp_experiment.py
 ```
 This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
 
-### 5. Demo Mode / Experimental Model Limitation
-Ashwin's EV Candidate v2 model is integrated for offline demonstration purposes only. It is currently marked as **experimental_not_deployable** and has not been approved for real-world deployment.
-- It MUST be instantiated with `ExperimentalEVModelClient(demo_mode=True)`.
-- It cannot be used in a live production environment without generating an explicit `EVModelIntegrationError`.
+### 5. Demo Mode / EV Model Limitation
+This branch's MVP experiment still uses the Candidate v1 adapter through
+`ExperimentalEVModelClient(demo_mode=True)`. Candidate v1 is marked
+**experimental_not_deployable** and is retained only as historical experiment code.
+
+Candidate v2 has separately passed its declared offline holdout checks and is the model intended for the final
+hackathon integration. Its status is **accepted_for_offline_demo**; real-world deployment remains disabled. The final
+integration must preserve Candidate v2's saved artifact, evidence checks, and explicit offline-only label.
 
 ## Status
 

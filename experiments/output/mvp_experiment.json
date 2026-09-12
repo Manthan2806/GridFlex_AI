@@ -1,6 +1,15 @@
 {
   "scenario_id": "mvp-demo-scen-001",
   "seed": 42,
+  "baseline_plan_status": "FEASIBLE",
+  "trust_aware_plan_status": "FEASIBLE",
+  "all_strategies_passed": true,
+  "trust_state_summary": {
+    "total_potential_kw": 51.0,
+    "total_expected_kw": 24.675827327613042,
+    "total_trusted_kw": 10.046009927613042,
+    "trusted_expected_retention_percent": 40.71194774641349
+  },
   "baseline_metrics": {
     "passed": true,
     "delivered_flexibility_error": 0.0,
@@ -13,19 +22,14 @@
     "violations": []
   },
   "trust_aware_metrics": {
-    "passed": false,
+    "passed": true,
     "delivered_flexibility_error": 0.0,
     "overcommitment": 0.0,
     "constraint_violation_count": 0,
-    "deadline_violation_count": 4,
+    "deadline_violation_count": 0,
     "reliability": 1.0,
     "renewable_absorption": null,
     "rebound": null,
-    "violations": [
-      "Resource ev-001 missed required 4.0 kWh (delivered 0.0 kWh)",
-      "Resource ev-002 missed required 6.0 kWh (delivered 0.0 kWh)",
-      "Resource ev-003 missed required 8.0 kWh (delivered 0.0 kWh)",
-      "Resource ev-005 missed required 10.0 kWh (delivered 0.0 kWh)"
-    ]
+    "violations": []
   }
 }

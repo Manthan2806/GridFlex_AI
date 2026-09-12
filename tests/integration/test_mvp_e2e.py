@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, timedelta, timezone
 
-from backend.app.domain.enums import ResourceType
+from backend.app.domain.enums import OptimizationStatus, ResourceType
 from backend.app.domain.models import FlexibilityResource
 from backend.app.schemas.scenarios import Scenario
 from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
@@ -19,13 +19,13 @@ def _make_resource(res_id: str, max_power: float = 7.2, required_kwh: float = 4.
         location_id="test-loc",
         rated_power_kw=max_power,
         earliest_start=start,
-        latest_end=start + timedelta(hours=2),
+        latest_end=start + timedelta(hours=8),
         required_kwh=required_kwh,
         minimum_kwh=0.0,
         maximum_kwh=20.0,
         minimum_duration=15,
-        maximum_duration=120,
-        deadline=start + timedelta(hours=2),
+        maximum_duration=480,
+        deadline=start + timedelta(hours=8),
         min_power=0.0,
         max_power=max_power,
         historical_response=[],
@@ -80,9 +80,12 @@ def test_mvp_e2e_experiment_runner():
     assert base_res is not None
     assert trust_res is not None
     
-    # Check that both ran successfully through verification
-    assert isinstance(base_res.overcommitment, float)
-    assert isinstance(trust_res.overcommitment, float)
+    # A final MVP result must do more than execute: both plans must be feasible
+    # and both simulated outcomes must pass verification.
+    assert comparison.baseline_plan_status == OptimizationStatus.FEASIBLE
+    assert comparison.trust_aware_plan_status == OptimizationStatus.FEASIBLE
+    assert base_res.passed
+    assert trust_res.passed
     
     # Trust-aware should generally have <= overcommitment than baseline in uncertain scenarios
     assert trust_res.overcommitment <= base_res.overcommitment
