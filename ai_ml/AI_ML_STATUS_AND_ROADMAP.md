@@ -388,7 +388,57 @@ limitations are recorded in:
 data/processed/water_heater_training/water_heater_training_metadata.json
 ```
 
-### 5.13 Test evidence
+### 5.13 Water-heater baseline evaluation
+
+Five simple prediction rules were compared on the validation resources while
+the final test outcomes remained unread:
+
+- global training mean;
+- heater-type training mean;
+- heater-type plus command-direction training mean;
+- each heater's prior response mean;
+- each heater's prior response exponential moving average.
+
+The heater-type plus command-direction mean had the lowest validation ratio MAE:
+
+| Baseline result | Value |
+| --- | ---: |
+| Validation rows | 3,150 |
+| Selected baseline | Heater type plus direction mean |
+| Delivery-ratio MAE | 0.371462 |
+| Power MAE | 1.325517 kW |
+| Overprediction rate | 54.41% |
+| MAE improvement over global mean | 0.10% |
+
+The small improvement means the grouped average is not much better than one
+fleet-wide average. The high overprediction rate also means this baseline is
+not safe enough to become `trusted_kw`. It is an accuracy reference only. A
+classical model is justified because it can test whether temperature margin,
+pre-dispatch power, resource constraints, time, and historical behavior add
+useful information.
+
+### 5.14 Water-heater candidate v1 development
+
+The first classical candidate uses `HistGradientBoostingRegressor` with a fixed
+random seed. It was fitted on 14,700 training rows and evaluated on 3,150
+validation rows. The 3,150 final test outcomes remained unread.
+
+| Development metric | Selected baseline | Candidate v1 |
+| --- | ---: | ---: |
+| Delivery-ratio MAE | 0.371462 | 0.336900 |
+| Power MAE | 1.325517 kW | 1.202274 kW |
+| Overprediction rate | 54.41% | 53.62% |
+
+Candidate v1 improved both MAE measures by approximately 9.30%, produced no
+out-of-bound predictions, and passed its development checks. Its status is
+`accepted_for_safety_calibration`, not accepted for final demo or deployment.
+No model artifact has been saved yet.
+
+The overprediction rate remains too high for trusted dispatch. The next stage
+must create and validate a conservative `trusted_kw` policy using validation
+evidence without opening the final test outcomes.
+
+### 5.15 Test evidence
 
 The last repository-wide test run before adding the water-heater files reported
 139 passing tests.
@@ -559,6 +609,10 @@ the resource-level train/validation/test assignment.
 
 ### Stage WH-4 — Evaluate simple baselines
 
+Status: implemented on the working branch. The heater-type plus direction mean
+was selected with validation ratio MAE 0.371462, only 0.10% better than the
+global mean. Test and review before committing.
+
 Before classical ML, compare transparent baselines such as:
 
 1. global mean delivery ratio from training data;
@@ -572,6 +626,10 @@ metrics include ratio MAE, power MAE, bias, overprediction rate, and retained
 power.
 
 ### Stage WH-5 — Train a small classical model
+
+Status: completed on the working branch. Candidate v1 improves validation ratio
+and power MAE by approximately 9.30% over the selected baseline and is accepted
+to proceed to safety calibration. It is not a final or deployable model.
 
 Use a reproducible classical model only if it beats the strongest baseline on
 validation data. Candidate families may include Random Forest or Histogram
@@ -774,7 +832,23 @@ python -m ai_ml.water_heater_model.audit_water_heater_data
 python -m pytest -q
 ```
 
-If they pass, review and commit the water-heater dataset, audit, and training-table
-checkpoint. The next implementation stage after that is **Stage WH-4**, simple
-baseline evaluation. Do not train a classical model before comparing it with
-those baselines.
+If they pass, also run the baseline tests and review the baseline report:
+
+```powershell
+python -m pytest tests/unit/water_heater_model/test_evaluate_water_heater_baselines.py -q
+python -m ai_ml.water_heater_model.evaluate_water_heater_baselines
+```
+
+The next implementation stage is **Stage WH-6**, calibrating conservative
+`trusted_kw` estimates using validation evidence. The final test outcomes must
+remain sealed until the model and safety policy are frozen.
+## Water-heater submission checkpoint
+
+Water-heater candidate v1 is accepted for the hackathon/MVP prototype, not for
+real deployment. The locked histogram-gradient-boosting model achieved 0.335084
+response-ratio MAE and 1.210335 kW MAE on the one-time, resource-disjoint final
+test. Its 10th-percentile trusted estimate held every predeclared group below a
+15% overprediction rate (9.78% overall), but retained only 5.22% of expected
+power. That low usefulness is intentionally disclosed rather than optimized on
+the final test. The reusable artifact, inference helper, final report, model
+card and release regression tests are now present.
