@@ -37,4 +37,21 @@ Generated device-level flexibility and behavior data. **Synthetic data must reco
 
 ## Current Status
 
-No datasets have been downloaded. Datasets will be acquired or generated during the data acquisition phase.
+- EV data: 700 ACN-anchored synthetic resource profiles and 21,000 behavior rows.
+- Solar/weather data: real NASA POWER hourly data for an Ahmedabad demo point,
+  expanded to clearly labelled 15-minute computed rows for 2024.
+- Demand data: real all-India operational SCADA snapshots at 15-minute timestamps
+  for 344 complete days in 2025. The same source also provides national solar,
+  wind, hydro, thermal, and total generation readings.
+
+The processed demand data contains measured snapshots, not calculated 15-minute
+profiles. Missing or incomplete days are excluded rather than filled with invented
+values. Known source warnings are recorded in the `quality_flags` column. This is
+national data and must not be presented as Gujarat- or Ahmedabad-only data. See
+`data/processed/demand_metadata.json` for provenance and validation details.
+
+Rebuild the demand checkpoint from the repository root with:
+
+```text
+python -m ai_ml.prepare_demand_data
+```

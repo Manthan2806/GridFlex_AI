@@ -1,0 +1,88 @@
+{
+  "source": "India Power Grid - NLDC Daily PSP Reports",
+  "source_repository": "https://github.com/HalcyonVector/Grid-Sentinel",
+  "source_dataset_page": "https://www.kaggle.com/datasets/halcyonvector/india-power-grid-nldc-daily-psp-reports",
+  "upstream_provider": "GRID-INDIA National Load Despatch Centre daily PSP reports",
+  "upstream_report_page": "https://grid-india.in/en/reports/daily-psp-report",
+  "source_commit": "9b6ffc0f5f47fff1f86845e3a84f71aa12d45c94",
+  "source_commit_date_utc": "2026-09-11T06:40:55Z",
+  "source_download_url": "https://raw.githubusercontent.com/HalcyonVector/Grid-Sentinel/9b6ffc0f5f47fff1f86845e3a84f71aa12d45c94/Dataset/study2_scada.csv",
+  "source_license": "CC BY-SA 4.0",
+  "source_sha256": "963d8b861ff4584c886ace27af2dd83aa909b17bf750f0805ee1900ac2dec2c8",
+  "generator_version": "gridflex-nldc-scada-v2",
+  "geographic_scope": "All-India electricity system",
+  "scope_note": "National system data; it must not be described as Gujarat-only demand.",
+  "year": 2025,
+  "time_standard": "Asia/Kolkata (UTC+05:30)",
+  "source_resolution": "15-minute instantaneous operational SCADA snapshots",
+  "processed_resolution": "15 minutes",
+  "measurement_note": "Values are observed SCADA snapshots at quarter-hour timestamps, not energy averaged across each 15-minute interval.",
+  "classification": "REAL/PUBLIC operational SCADA",
+  "transformation": [
+    "select source rows for 2025",
+    "retain only days containing all 96 unique quarter-hour timestamps",
+    "require demand and generation fields; do not impute missing values",
+    "preserve source measurements and label known quality warnings",
+    "construct timezone-aware ISO 8601 timestamps and rename selected columns"
+  ],
+  "source_year_rows": 33468,
+  "source_year_days_present": 350,
+  "retained_complete_days": 344,
+  "retained_rows": 33024,
+  "missing_calendar_dates": [
+    "2025-05-22",
+    "2025-05-23",
+    "2025-06-04",
+    "2025-06-11",
+    "2025-06-12",
+    "2025-06-19",
+    "2025-06-28",
+    "2025-07-13",
+    "2025-07-15",
+    "2025-07-29",
+    "2025-08-07",
+    "2025-08-20",
+    "2025-08-21",
+    "2025-09-09",
+    "2025-11-10"
+  ],
+  "excluded_incomplete_days_and_row_counts": {
+    "2025-04-01": 1,
+    "2025-04-26": 95,
+    "2025-05-11": 95,
+    "2025-05-19": 95,
+    "2025-10-02": 63,
+    "2025-11-17": 95
+  },
+  "optional_frequency_missing_rows": 11,
+  "negative_solar_source_rows": 357,
+  "value_ranges": {
+    "demand_met_mw": {
+      "minimum": 133476.0,
+      "maximum": 241840.0
+    },
+    "solar_generation_mw": {
+      "minimum": -112.0,
+      "maximum": 72242.0
+    }
+  },
+  "limitations": [
+    "The data is national, not Gujarat- or Ahmedabad-specific.",
+    "Source gaps and incomplete days are excluded rather than invented or imputed.",
+    "Operational telemetry can contain freezes, dropouts, or erroneous values.",
+    "Small negative solar readings are preserved exactly as published and marked negative_solar_source_value; treat them as telemetry offsets.",
+    "Frequency is optional and remains blank in a small number of otherwise complete rows."
+  ],
+  "files": {
+    "raw\\demand\\grid_sentinel_study2_scada.csv": {
+      "bytes": 67922821,
+      "sha256": "963d8b861ff4584c886ace27af2dd83aa909b17bf750f0805ee1900ac2dec2c8",
+      "classification": "REAL/PUBLIC source CSV derived from GRID-INDIA reports"
+    },
+    "processed\\demand_15min\\india_nldc_scada_15min_2025.csv": {
+      "bytes": 4243698,
+      "sha256": "c30e0c1cbe06620e771963c193b017134e011bbec7b8481ed20d942cff094640",
+      "classification": "REAL/PUBLIC measurements; filtered and renamed"
+    }
+  }
+}
