@@ -65,7 +65,6 @@ def initialize_database() -> None:
             session.commit()
 
 
-@app.post("/simulate")
 def simulate_full():
     import os, sys
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -76,7 +75,10 @@ def simulate_full():
     result = run_integrated_simulation()
     return result
 
+@app.post("/simulate")
 def simulate() -> dict:
+
+
     with SessionLocal() as session:
         ev_resources = list(session.scalars(select(EVResource).order_by(EVResource.id)))
 
@@ -133,6 +135,12 @@ def simulate() -> dict:
             "total_delivered_kw": rounded(total_delivered_kw),
             "results": results,
         }
+        try:
+            from datetime import datetime
+            from backend.app.services.peak_alignment import compute_peak_alignment_score
+            response["peak_alignment_score"] = compute_peak_alignment_score(datetime.utcnow())
+        except Exception:
+            response["peak_alignment_score"] = None
         session.add(
             SimulationRun(
                 run_id=response["run_id"],
@@ -181,7 +189,11 @@ def get_run(run_id: str) -> dict:
 
 @app.post("/simulate/full")
 def simulate_full():
-    from backend.app.services.integrated_simulation import run_integrated_simulation
+    import os, sys
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
 
+    from backend.app.services.integrated_simulation import run_integrated_simulation
     result = run_integrated_simulation()
     return result
