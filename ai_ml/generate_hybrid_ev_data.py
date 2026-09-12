@@ -8,6 +8,7 @@ import gzip
 import hashlib
 import io
 import json
+import math
 import random
 import statistics
 import urllib.parse
@@ -20,7 +21,7 @@ from pathlib import Path
 
 ACN_REPOSITORY = "tongxin-li/ACN-Data-Static"
 ACN_COMMIT = "abb7cf15cc7108913e965d4375cc7270d532b65f"
-GENERATOR_VERSION = "gridflex-acn-hybrid-ev-v1"
+GENERATOR_VERSION = "gridflex-acn-hybrid-ev-v2"
 DEFAULT_SEED = 2806
 DEFAULT_RESOURCE_COUNT = 700
 DEFAULT_HISTORY_PER_RESOURCE = 30
@@ -140,11 +141,21 @@ def _parse_acn_time(value: str) -> datetime:
 def _scenario_window(summary: dict[str, object]) -> tuple[datetime, datetime]:
     start = _parse_acn_time(str(summary["connection_time"]))
     end = _parse_acn_time(str(summary["disconnect_time"]))
-    duration = max(timedelta(minutes=15), end - start)
+    source_duration = max(timedelta(minutes=15), end - start)
+    complete_blocks = max(1, int(source_duration.total_seconds() // (15 * 60)))
     scenario_start = SCENARIO_DATE.replace(
-        hour=start.hour, minute=(start.minute // 15) * 15
+        hour=start.hour,
+        minute=(start.minute // 15) * 15,
+        second=0,
+        microsecond=0,
     )
-    return scenario_start, scenario_start + duration
+    return scenario_start, scenario_start + timedelta(minutes=15 * complete_blocks)
+
+
+def _floor_decimal(value: float, places: int) -> float:
+    """Round down so a stored limit never exceeds physical capacity."""
+    factor = 10**places
+    return math.floor(value * factor + 1e-9) / factor
 
 
 def _split(index: int, total: int) -> str:
@@ -160,37 +171,75 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def generate(config: Config, output_root: Path) -> dict[str, object]:
-    rng = random.Random(config.seed)
-    all_paths = sorted(_list_session_files())
-    if len(all_paths) < config.resource_count:
-        raise ValueError("ACN archive contains fewer sessions than requested")
-    candidate_paths = list(all_paths)
-    rng.shuffle(candidate_paths)
-    summaries: list[dict[str, object]] = []
-    examined_count = 0
-    with ThreadPoolExecutor(max_workers=16) as executor:
-        for offset in range(0, len(candidate_paths), 1_000):
-            batch = candidate_paths[offset : offset + 1_000]
-            examined_count += len(batch)
-            valid = executor.map(_safe_download_summary, batch)
-            summaries.extend(item for item in valid if item is not None)
-            if len(summaries) >= config.resource_count:
-                break
-    summaries = summaries[: config.resource_count]
-    if len(summaries) < config.resource_count:
-        raise ValueError("Could not obtain enough valid ACN sessions")
+def _cached_source_summaries(
+    source_path: Path, metadata_path: Path, required_count: int, seed: int
+) -> tuple[list[dict[str, object]], dict[str, object]] | None:
+    """Load the pinned ACN summaries already captured by an earlier run."""
+    if not source_path.exists() or not metadata_path.exists():
+        return None
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if metadata.get("source_commit_reference") != ACN_COMMIT:
+        return None
+    if int(metadata.get("seed", -1)) != seed:
+        return None
+    with source_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) < required_count:
+        return None
+    summaries = [
+        {key: value for key, value in row.items() if key != "resource_id"}
+        for row in rows[:required_count]
+    ]
+    return summaries, metadata
 
+
+def generate(config: Config, output_root: Path) -> dict[str, object]:
     source_dir = output_root / "source_samples"
     ev_dir = output_root / "ev"
     behaviour_dir = output_root / "behavior"
     for directory in (source_dir, ev_dir, behaviour_dir):
         directory.mkdir(parents=True, exist_ok=True)
 
-    source_fields = tuple(summaries[0])
     source_path = source_dir / "acn_session_summaries.csv"
     resource_path = ev_dir / "ev_resources.csv"
     behaviour_path = behaviour_dir / "ev_historical_response.csv"
+    metadata_path = output_root / "ev_dataset_metadata.json"
+
+    rng = random.Random(config.seed)
+    cached = _cached_source_summaries(
+        source_path, metadata_path, config.resource_count, config.seed
+    )
+    reused_source_summaries = cached is not None
+    if cached is not None:
+        summaries, previous_metadata = cached
+        available_session_count = int(
+            previous_metadata.get("available_acn_sessions", len(summaries))
+        )
+        examined_count = int(
+            previous_metadata.get("candidate_sessions_examined", len(summaries))
+        )
+    else:
+        all_paths = sorted(_list_session_files())
+        if len(all_paths) < config.resource_count:
+            raise ValueError("ACN archive contains fewer sessions than requested")
+        candidate_paths = list(all_paths)
+        selection_rng = random.Random(config.seed)
+        selection_rng.shuffle(candidate_paths)
+        summaries = []
+        examined_count = 0
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            for offset in range(0, len(candidate_paths), 1_000):
+                batch = candidate_paths[offset : offset + 1_000]
+                examined_count += len(batch)
+                valid = executor.map(_safe_download_summary, batch)
+                summaries.extend(item for item in valid if item is not None)
+                if len(summaries) >= config.resource_count:
+                    break
+        summaries = summaries[: config.resource_count]
+        if len(summaries) < config.resource_count:
+            raise ValueError("Could not obtain enough valid ACN sessions")
+        available_session_count = len(all_paths)
+
     source_rows: list[dict[str, object]] = []
     resource_rows: list[dict[str, object]] = []
     behaviour_rows: list[dict[str, object]] = []
@@ -208,13 +257,15 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
 
         # ACN does not expose battery capacity or SOC; these fields are synthetic.
         battery_capacity_kwh = round(rng.uniform(max(35.0, delivered_kwh * 1.4), 100.0), 2)
-        maximum_kwh = round(
+        maximum_kwh = _floor_decimal(
             min(battery_capacity_kwh, rated_power_kw * duration_hours), 3
         )
         required_kwh = min(round(max(0.01, delivered_kwh), 3), maximum_kwh)
         soc_gain = 100.0 * required_kwh / battery_capacity_kwh
-        arrival_soc_pct = round(rng.uniform(10.0, max(11.0, 90.0 - soc_gain)), 1)
-        target_soc_pct = round(min(100.0, arrival_soc_pct + soc_gain), 1)
+        arrival_soc_pct = round(
+            rng.uniform(10.0, max(11.0, 90.0 - soc_gain)), 3
+        )
+        target_soc_pct = round(min(100.0, arrival_soc_pct + soc_gain), 3)
 
         # Priors are synthetic because ACN has no explicit override/failure labels.
         assumed_availability = rng.uniform(0.86, 0.99)
@@ -300,12 +351,22 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
         "source": "ACN-Data Static",
         "source_url": f"https://github.com/{ACN_REPOSITORY}",
         "source_commit_reference": ACN_COMMIT,
-        "available_acn_sessions": len(all_paths),
+        "available_acn_sessions": available_session_count,
         "sampled_acn_sessions": len(summaries),
         "candidate_sessions_examined": examined_count,
+        "reused_pinned_source_summaries": reused_source_summaries,
         "sample_method": "sorted paths then seeded random sample without replacement",
         "geographic_scope": "ACN US workplace sites; GridFlex locations are synthetic",
         "scenario_date": SCENARIO_DATE.isoformat(),
+        "time_grid_minutes": 15,
+        "session_alignment": (
+            "Start times are rounded down to a quarter hour. End times retain only "
+            "complete 15-minute blocks within the ACN-derived connection duration."
+        ),
+        "energy_feasibility_rule": (
+            "maximum_kwh and required_kwh never exceed rated power multiplied by "
+            "the aligned connection duration"
+        ),
         "split_rule": "resource-level 70/15/15",
         "files": files,
         "field_provenance": {
@@ -327,9 +388,9 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
             "ACN observations are US workplace charging sessions, not Indian residential EV data.",
             "One sampled ACN session anchors each virtual EV; it is not a persistent real vehicle identity.",
             "Overrides, failures, battery capacity, SOC, and repeated history are synthetic.",
+            "Partial connection time below one complete 15-minute block is not represented.",
         ],
     }
-    metadata_path = output_root / "ev_dataset_metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return metadata
 
