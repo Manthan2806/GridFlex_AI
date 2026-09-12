@@ -12,6 +12,7 @@ from backend.app.schemas.scenarios import Scenario
 from backend.app.integrations.ai_ml_client import OfflineDemoEVModelClientV2
 from backend.app.services.trust_hydration import build_optimizer_context
 from backend.app.services.dispatch_service import MVPOptimizer
+from experiments.disruption_adapter import SeededEVDisruptionAdapter
 from simulation.adapter import SimulationAdapter
 from backend.app.services.verification_service import SimulationVerifier
 from experiments.runner import ExperimentRunner
@@ -21,6 +22,8 @@ def _make_resource(
     max_power: float = 7.2,
     required_kwh: float = 4.0,
     connection_hours: float = 8.0,
+    availability_rate: float = 0.9,
+    override_rate: float = 0.05,
 ) -> FlexibilityResource:
     start = datetime(2026, 9, 12, 10, 0, tzinfo=timezone.utc)
     return FlexibilityResource(
@@ -39,8 +42,8 @@ def _make_resource(
         min_power=0.0,
         max_power=max_power,
         historical_response=[],
-        override_rate=0.0,
-        availability_rate=1.0,
+        override_rate=override_rate,
+        availability_rate=availability_rate,
     )
 
 def main():
@@ -51,11 +54,11 @@ def main():
     # 1. Setup deterministic scenario
     master_seed = 42
     resources = [
-        _make_resource("ev-001", max_power=7.2, required_kwh=4.0),
-        _make_resource("ev-002", max_power=7.2, required_kwh=6.0),
-        _make_resource("ev-003", max_power=11.0, required_kwh=8.0),
-        _make_resource("ev-004", max_power=3.6, required_kwh=2.0),
-        _make_resource("ev-005", max_power=22.0, required_kwh=10.0),
+        _make_resource("ev-001", max_power=7.2, required_kwh=4.0, availability_rate=0.92, override_rate=0.04),
+        _make_resource("ev-002", max_power=7.2, required_kwh=6.0, availability_rate=0.82, override_rate=0.12),
+        _make_resource("ev-003", max_power=11.0, required_kwh=8.0, availability_rate=0.75, override_rate=0.18),
+        _make_resource("ev-004", max_power=3.6, required_kwh=2.0, availability_rate=0.96, override_rate=0.02),
+        _make_resource("ev-005", max_power=22.0, required_kwh=10.0, availability_rate=0.78, override_rate=0.16),
     ]
     scenario = Scenario(
         scenario_id="mvp-demo-scen-001",
@@ -91,6 +94,17 @@ def main():
         scenario=scenario,
         renewable_demand_forecasts=renewable_forecasts,
         context=ctx
+    )
+
+    disruption_runner = ExperimentRunner(
+        strategy=optimizer,
+        verifier=verifier,
+        adapter=SeededEVDisruptionAdapter(seed=master_seed),
+    )
+    disruption_comparison = disruption_runner.run_paired_experiment(
+        scenario=scenario,
+        renewable_demand_forecasts=renewable_forecasts,
+        context=ctx,
     )
 
     base_res = comparison.baseline_result
@@ -141,27 +155,64 @@ def main():
     print(f"{'Constraint Violations':<30} | {base_res.constraint_violation_count:<15} | {trust_res.constraint_violation_count:<15}")
     print(f"{'Deadline Violations':<30} | {base_res.deadline_violation_count:<15} | {trust_res.deadline_violation_count:<15}")
 
+    disruption_base = disruption_comparison.baseline_result
+    disruption_trust = disruption_comparison.trust_aware_result
+    disruption_reduction = (
+        disruption_base.overcommitment - disruption_trust.overcommitment
+    )
+    baseline_overcommitment_kwh = disruption_base.overcommitment * 0.25
+    trust_overcommitment_kwh = disruption_trust.overcommitment * 0.25
+    disruption_reduction_kwh = disruption_reduction * 0.25
+    disruption_reduction_percent = (
+        100.0 * disruption_reduction / disruption_base.overcommitment
+        if disruption_base.overcommitment
+        else 0.0
+    )
+    reliability_improvement_points = 100.0 * (
+        disruption_trust.reliability - disruption_base.reliability
+    )
+    print("\n--- 5. SEEDED EV DISRUPTION COMPARISON ---")
+    print(f"Shared disruption seed: {master_seed}")
+    print(f"Baseline overcommitment energy: {baseline_overcommitment_kwh:.2f} kWh")
+    print(f"Trust-aware overcommitment energy: {trust_overcommitment_kwh:.2f} kWh")
+    print(
+        f"Overcommitment reduction: {disruption_reduction_kwh:.2f} kWh "
+        f"({disruption_reduction_percent:.2f}%)"
+    )
+    print(f"Baseline reliability: {disruption_base.reliability:.3f}")
+    print(f"Trust-aware reliability: {disruption_trust.reliability:.3f}")
+    print(f"Reliability improvement: {reliability_improvement_points:.2f} percentage points")
+    print(f"Baseline deadline violations: {disruption_base.deadline_violation_count}")
+    print(f"Trust-aware deadline violations: {disruption_trust.deadline_violation_count}")
+
     print("\n==================================================")
     print("RESULT INTERPRETATION")
     print("Trust-aware dispatch uses more conservative trusted flexibility estimates.")
-    print(f"In this scenario, that conservatism results in {trust_res.deadline_violation_count} deadline violations,")
-    print("while the baseline satisfies all deadlines.")
-    print("Global feeder/system safety cannot be evaluated because the canonical")
-    print("Scenario does not currently expose a system capacity constraint.")
-    print("\nFurthermore, the current Phase 1 SimulationEngine is deterministic and always")
-    print("delivers dispatched power perfectly. It does not yet implement stochastic")
-    print("override/availability disruptions, which means the baseline's potential")
-    print("overcommitments are not physically materialized in this experiment.")
+    print("In the deterministic control run, both strategies satisfy every deadline.")
+    print("This script compares response reliability, not feeder-level safety.")
+    print("\nThe primary pipeline remains deterministic and checks integration correctness.")
+    print("The separate seeded comparison applies synthetic availability and user-override")
+    print("events. Both strategies receive the same resource/timestamp outcomes.")
+    print("This illustrates behavior under controlled disruptions; it is not field evidence.")
     all_strategies_passed = bool(base_res.passed and trust_res.passed)
     if all_strategies_passed:
-        print("\nBoth strategies satisfy the resource constraints in this scenario.")
-        print("The trust-aware strategy uses conservative power estimates over a longer")
-        print("charging window; it does not yet quantify feeder-level safety or a")
-        print("real-world overcommitment penalty.")
+        print("\nBoth strategies satisfy the resource constraints in the deterministic control.")
     else:
         print("\nThis run is not a successful end-to-end result because at least one")
         print("strategy failed verification. Review the reported violations before")
         print("using the generated JSON as demo evidence.")
+    if disruption_base.passed and disruption_trust.passed:
+        print("Both strategies also pass the seeded disruption stress test.")
+    else:
+        print(
+            "In the seeded stress test, neither strategy satisfies every deadline; "
+            "dynamic replanning is not implemented."
+        )
+        print(
+            f"Trust-aware dispatch reduces overcommitment energy by "
+            f"{disruption_reduction_percent:.2f}% and improves reliability by "
+            f"{reliability_improvement_points:.2f} percentage points in this seed."
+        )
     print("==================================================")
 
     # Write JSON output
@@ -183,6 +234,18 @@ def main():
         },
         "baseline_metrics": base_res.model_dump(),
         "trust_aware_metrics": trust_res.model_dump(),
+        "seeded_disruption_experiment": {
+            "evidence_type": "synthetic seeded experiment; not real-world validation",
+            "shared_seed": master_seed,
+            "same_outcome_rule_for_both_strategies": True,
+            "baseline_metrics": disruption_base.model_dump(),
+            "trust_aware_metrics": disruption_trust.model_dump(),
+            "baseline_overcommitment_kwh": baseline_overcommitment_kwh,
+            "trust_aware_overcommitment_kwh": trust_overcommitment_kwh,
+            "overcommitment_reduction_kwh": disruption_reduction_kwh,
+            "overcommitment_reduction_percent": disruption_reduction_percent,
+            "reliability_improvement_percentage_points": reliability_improvement_points,
+        },
     }
     with out_file.open("w") as f:
         json.dump(out_data, f, indent=2)

@@ -203,6 +203,11 @@ python scripts/run_mvp_experiment.py
 ```
 This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
 
+It also runs a separate, clearly labelled seeded-disruption comparison. Synthetic
+EV availability and user-override events are generated from the same seed,
+resource ID and timestamp for both strategies, so the comparison is repeatable
+and fair. This section is demonstration evidence, not real-world validation.
+
 ### 5. Demo Mode / EV Model Limitation
 The MVP experiment uses Candidate v2 through `OfflineDemoEVModelClientV2(demo_mode=True)`. Candidate v2 passed its
 declared independent offline holdout checks and has status **accepted_for_offline_demo**. It loads a saved, hash-checked
