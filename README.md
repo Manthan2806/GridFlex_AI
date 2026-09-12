@@ -146,6 +146,7 @@ This README is a navigation document, not a source of truth. It does not own pro
 
 For the current project status, success criteria, MVP scope, non-goals, and future possibilities, see PROJECT.md.
 
+<<<<<<< HEAD
 ## Getting Started
 
 ### 1. Environment Setup
@@ -187,6 +188,8 @@ Candidate v2 has separately passed its declared offline holdout checks and is th
 hackathon integration. Its status is **accepted_for_offline_demo**; real-world deployment remains disabled. The final
 integration must preserve Candidate v2's saved artifact, evidence checks, and explicit offline-only label.
 
+=======
+>>>>>>> 1ef4f81fafd2ee185875a14dca5e40f604f18f08
 ## Status
 
 DRAFT
