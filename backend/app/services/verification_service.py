@@ -1,4 +1,5 @@
-from typing import List, Dict, Any, Optional
+from datetime import datetime
+from typing import List, Dict, Optional
 from pydantic import BaseModel
 
 from backend.app.schemas.runs import SimulationInput, SimulationOutput
@@ -56,7 +57,6 @@ class SimulationVerifier:
                 constraint_violations += 1
                 violations.append(f"Negative power {inst.power_kw} for {inst.resource_id}")
                 
-            from datetime import datetime
             if isinstance(inst.time_step, datetime):
                 if inst.time_step.minute % 15 != 0 or inst.time_step.second != 0 or inst.time_step.microsecond != 0:
                     constraint_violations += 1
