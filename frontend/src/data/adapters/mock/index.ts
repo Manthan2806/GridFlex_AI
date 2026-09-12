@@ -1,0 +1,1 @@
+export { MockDispatchAdapter } from "./dispatch"
