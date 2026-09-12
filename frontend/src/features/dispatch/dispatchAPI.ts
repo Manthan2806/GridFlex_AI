@@ -33,6 +33,10 @@ export class DispatchAPI {
   async runSimulation(): Promise<SimulationResult> {
     return this.adapter.runSimulation()
   }
+
+  async runFullSimulation(): Promise<SimulationResult> {
+    return this.adapter.runFullSimulation()
+  }
 }
 
 export function createDispatchAPI(adapter: DataAdapter) {

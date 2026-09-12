@@ -1,34 +1,33 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react"
 import { useDataAdapter } from "../../app/providers/DataAdapterProvider"
-import { DispatchAPI } from "./dispatchAPI"
-import type { DispatchData } from "../../data/types/domain/dispatch"
-import type { SimulationResult } from "../../data/types/domain"
-import type { DispatchState } from "./types"
-import { dispatchReducer, initialDispatchUIState } from "./dispatchSlice"
+import { ExperimentAPI } from "./experimentAPI"
+import type { HorizonSimulationResult } from "../../../data/types/domain/experiment"
+import type { ExperimentState } from "./types"
+import { experimentReducer, initialExperimentUIState } from "./experimentSlice"
 
-export function useDispatch() {
+export function useExperiments() {
   const adapter = useDataAdapter()
-  const api = useMemo(() => new DispatchAPI(adapter), [adapter])
-  const [dispatchState, setDispatchState] = useState<DispatchState>({
+  const api = useMemo(() => new ExperimentAPI(adapter), [adapter])
+  const [experimentState, setExperimentState] = useState<ExperimentState>({
     status: "idle",
     data: null,
     error: null,
     lastFetched: null,
   })
-  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null)
-  const [uiState, uiDispatch] = useReducer(dispatchReducer, initialDispatchUIState)
+  const [simulationResult, setSimulationResult] = useState<HorizonSimulationResult | null>(null)
+  const [uiState, uiDispatch] = useReducer(experimentReducer, initialExperimentUIState)
 
   useEffect(() => {
-    if (dispatchState.status === "idle") {
-      void loadDispatch()
+    if (experimentState.status === "idle") {
+      void loadExperiment()
     }
-  }, [dispatchState.status])
+  }, [experimentState.status])
 
-  const loadDispatch = useCallback(async () => {
-    setDispatchState((prev) => ({ ...prev, status: "loading" }))
+  const loadExperiment = useCallback(async () => {
+    setExperimentState((prev) => ({ ...prev, status: "loading" }))
     try {
-      const data = await api.getDispatchData()
-      setDispatchState({
+      const data = await api.getExperimentData()
+      setExperimentState({
         status: "success",
         data,
         error: null,
@@ -36,8 +35,8 @@ export function useDispatch() {
       })
       return { status: "success" as const, data, error: null, lastFetched: Date.now() }
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Unable to load dispatch data"
-      setDispatchState({
+      const message = e instanceof Error ? e.message : "Unable to load experiment data"
+      setExperimentState({
         status: "error",
         data: null,
         error: message,
@@ -47,25 +46,25 @@ export function useDispatch() {
     }
   }, [api])
 
-  const runSimulation = useCallback(async () => {
+  const runHorizonSimulation = useCallback(async () => {
     uiDispatch({ type: "setSimulationRunning", payload: true })
     try {
-      const result = await api.runSimulation()
+      const result = await api.runFullHorizonSimulation()
       setSimulationResult(result)
       uiDispatch({ type: "setSimulationComplete", payload: true })
       uiDispatch({ type: "setSimulationRunning", payload: false })
       return result
     } catch (error) {
       uiDispatch({ type: "setSimulationRunning", payload: false })
-      console.error("Simulation failed:", error)
+      console.error("Horizon simulation failed:", error)
       throw error
     }
   }, [api])
 
   return {
-    dispatchState,
-    loadDispatch,
-    runSimulation,
+    experimentState,
+    loadExperiment,
+    runHorizonSimulation,
     simulationResult,
     uiState,
     uiDispatch,

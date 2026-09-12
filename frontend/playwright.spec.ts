@@ -35,11 +35,6 @@ test.describe('Frontend Validation', () => {
       window.__VALIDATION_CONSOLE_ERRORS__ = [];
       window.__VALIDATION_PAGE_ERRORS__ = [];
     });
-    
-    await page.addInitScript((consoleErrorsArray, pageErrorsArray) => {
-      window.__VALIDATION_CONSOLE_ERRORS__ = consoleErrorsArray;
-      window.__VALIDATION_PAGE_ERRORS__ = pageErrorsArray;
-    }, consoleErrors, pageErrors);
   });
 
   for (const viewport of viewports) {

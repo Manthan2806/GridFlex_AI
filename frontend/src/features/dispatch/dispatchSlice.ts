@@ -16,32 +16,29 @@ export const initialDispatchUIState: DispatchUIStateModel = {
   simulationComplete: false,
 }
 
-export function createDispatchUISlice() {
-  let state = { ...initialDispatchUIState }
+export type DispatchUIAction =
+  | { type: "setSelectedResourceId"; payload: string | null }
+  | { type: "setFilterText"; payload: string }
+  | { type: "setFilterType"; payload: string }
+  | { type: "setSimulationRunning"; payload: boolean }
+  | { type: "setSimulationComplete"; payload: boolean }
+  | { type: "reset" }
 
-  return {
-    getState() {
-      return { ...state }
-    },
-    setSelectedResourceId(id: string | null) {
-      state = { ...state, selectedResourceId: id }
-    },
-    setFilterText(text: string) {
-      state = { ...state, filterText: text }
-    },
-    setFilterType(type: string) {
-      state = { ...state, filterType: type }
-    },
-    setSimulationRunning(running: boolean) {
-      state = { ...state, simulationRunning: running }
-    },
-    setSimulationComplete(complete: boolean) {
-      state = { ...state, simulationComplete: complete }
-    },
-    reset() {
-      state = { ...initialDispatchUIState }
-    },
+export function dispatchReducer(state: DispatchUIStateModel, action: DispatchUIAction) {
+  switch (action.type) {
+    case "setSelectedResourceId":
+      return { ...state, selectedResourceId: action.payload }
+    case "setFilterText":
+      return { ...state, filterText: action.payload }
+    case "setFilterType":
+      return { ...state, filterType: action.payload }
+    case "setSimulationRunning":
+      return { ...state, simulationRunning: action.payload }
+    case "setSimulationComplete":
+      return { ...state, simulationComplete: action.payload }
+    case "reset":
+      return { ...initialDispatchUIState }
+    default:
+      return state
   }
 }
-
-export type DispatchUISlice = ReturnType<typeof createDispatchUISlice>
