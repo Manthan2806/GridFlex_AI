@@ -1,0 +1,108 @@
+{
+  "candidate_version": "ev_model_candidate_v2",
+  "status": "locked_for_new_holdout",
+  "deployment_allowed": false,
+  "model": {
+    "family": "HistGradientBoostingRegressor",
+    "name": "hist_gradient_boosting",
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "random_state": 2810
+    },
+    "fit_split": "original_train_only"
+  },
+  "feature_contract": {
+    "names_in_order": [
+      "rated_power_kw",
+      "max_power_kw",
+      "required_kwh",
+      "battery_capacity_kwh",
+      "arrival_soc_pct",
+      "target_soc_pct",
+      "soc_gap_pct",
+      "connection_window_hours",
+      "required_energy_share",
+      "average_required_power_kw",
+      "event_hour",
+      "event_weekday",
+      "prior_event_count",
+      "prior_delivery_ratio_mean",
+      "prior_delivery_ratio_ema",
+      "prior_delivery_ratio_std",
+      "prior_availability_rate",
+      "prior_override_rate"
+    ],
+    "imputation_medians": {
+      "rated_power_kw": 6.37,
+      "max_power_kw": 6.37,
+      "required_kwh": 7.5625,
+      "battery_capacity_kwh": 68.445,
+      "arrival_soc_pct": 40.918499999999995,
+      "target_soc_pct": 61.9755,
+      "soc_gap_pct": 12.196000000000002,
+      "connection_window_hours": 4.25,
+      "required_energy_share": 0.47309100000000004,
+      "average_required_power_kw": 2.2822115,
+      "event_hour": 13.75,
+      "event_weekday": 3.0,
+      "prior_event_count": 14.5,
+      "prior_delivery_ratio_mean": 0.5265675,
+      "prior_delivery_ratio_ema": 0.5433269999999999,
+      "prior_delivery_ratio_std": 0.187765,
+      "prior_availability_rate": 0.952381,
+      "prior_override_rate": 0.083333
+    }
+  },
+  "safety_policy": {
+    "calibration_coverage": 0.875,
+    "maximum_allowed_overprediction_rate_percent": 15.0,
+    "minimum_retention_percent": 50.0,
+    "dispatch_group_thresholds_kw": {
+      "small_max": 2.746666666666666,
+      "medium_max": 4.871
+    },
+    "lower_bound_model": {
+      "family": "HistGradientBoostingRegressor",
+      "name": "hist_gradient_quantile_0.175",
+      "parameters": {
+        "loss": "quantile",
+        "quantile": 0.175,
+        "learning_rate": 0.05,
+        "max_iter": 200,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 20,
+        "l2_regularization": 1.0,
+        "random_state": 2810
+      }
+    },
+    "conformal_adjustment_ratio_by_dispatch_group": {
+      "small": 0.15726502,
+      "medium": 0.09203596,
+      "large": 0.18028085
+    }
+  },
+  "final_gate": {
+    "holdout": "new source-disjoint ACN-anchored synthetic dataset",
+    "required_checks": {
+      "selected_expected_mae_ratio_beats_baseline": true,
+      "selected_expected_mae_kw_beats_baseline": true,
+      "all_calibration_groups_pass_15_percent_limit": true,
+      "trusted_kw_retention_passes_floor": true,
+      "old_test_outcomes_remained_sealed": true,
+      "selection_and_calibration_resources_are_disjoint": true
+    },
+    "evaluated": false
+  },
+  "library_versions": {
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.1"
+  },
+  "evidence": {
+    "training_table_canonical_sha256": "aa410fd84cea451676503a3ee3079f756951f023dad612bd2f1c6b502a7c37d6",
+    "development_report_canonical_sha256": "776c64ddb998985ee0e56aaa8dfedd03ecf2e448c0da00402fa37a0ad68e1238"
+  }
+}

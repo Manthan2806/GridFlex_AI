@@ -6,12 +6,13 @@ GridFlex AI is a simulation-first flexibility intelligence and orchestration sys
 
 ## Current Hackathon Prototype
 
-The runnable prototype currently covers EV resources only. It connects an experimental
-Random Forest estimate to a FastAPI endpoint, creates a feeder-limited dispatch plan,
-and executes that plan in the 15-minute simulation engine. The EV model did not pass
-its final deployment gate, so every API result is explicitly labelled as a demo-only
-offline estimate. The frontend, production database, optimizer, water-heater model,
-and industrial-load model remain planned work.
+The runnable prototype currently covers EV resources only. It connects a locked
+Histogram Gradient Boosting estimate and conditional lower-bound model to a FastAPI
+endpoint, creates a feeder-limited dispatch plan, and executes that plan in the
+15-minute simulation engine. Candidate v2 passed its source-disjoint hybrid/synthetic
+offline demo gate, but it is not approved for real deployment. The frontend,
+production database, optimizer, water-heater model, and industrial-load model remain
+planned work.
 
 ### Run the integrated demo
 
@@ -24,9 +25,9 @@ python -m pip install -r requirements-dev.txt
 uvicorn backend.app.main:app --reload --port 8000
 ```
 
-Open `http://127.0.0.1:8000/docs` and run `POST /simulate/full`. The first request
-trains the locked experimental candidate in memory, so it can take longer than later
-requests. Run the automated checks with `pytest -q`.
+Open `http://127.0.0.1:8000/docs` and run `POST /simulate/full`. The backend loads the
+locked v2 demo artifact rather than retraining during the request. Run the automated
+checks with `pytest -q`.
 
 ## Core Concept
 
@@ -71,7 +72,7 @@ See ARCHITECTURE.md for component boundaries, data flow, failure boundaries, and
 | Database | PostgreSQL |
 | Optimization | OR-Tools CP-SAT |
 | Simulation | Custom Python engine |
-| AI/ML | Experimental Random Forest EV estimator (not deployment-approved) |
+| AI/ML | Offline-demo-approved EV candidate v2 (not deployment-approved) |
 | Time Resolution | 15 minutes (MVP) |
 
 ## Repository Structure

@@ -11,10 +11,11 @@ def test_simulate_endpoint_uses_experimental_ev_model():
     assert response.status_code == 200
     payload = response.json()
     assert payload["demo_mode"] is True
-    assert payload["release_status"] == "experimental_not_deployable"
-    assert payload["label"] == "experimental offline estimate"
+    assert payload["release_status"] == "accepted_for_offline_demo"
+    assert payload["label"] == "offline demo estimate (hybrid/synthetic evidence)"
     assert len(payload["trust_states"]) == 3
     assert len(payload["dispatch_plan"]["dispatch_plan"]) == 3
+    assert payload["dispatch_plan"]["status"] == "FEASIBLE"
 
     for state in payload["trust_states"]:
         assert state["trusted_kw"] <= state["expected_kw"] <= state["potential_kw"]

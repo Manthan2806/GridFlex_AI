@@ -4,7 +4,7 @@ from typing import Dict
 
 from backend.app.domain.enums import OptimizationStatus, ResourceType
 from backend.app.domain.models import FlexibilityResource
-from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
+from backend.app.integrations.ai_ml_client import OfflineDemoEVModelClientV2
 from backend.app.schemas.dispatch import DispatchInstruction, DispatchPlan
 from backend.app.schemas.runs import SimulationInput, SimulationOutput
 from backend.app.schemas.scenarios import Scenario
@@ -89,14 +89,14 @@ def build_dispatch_plan(trusted_kw_values: Dict[str, float]) -> DispatchPlan:
     return DispatchPlan(
         dispatch_plan=instructions,
         objective_value=sum(instruction.power_kw for instruction in instructions),
-        status=OptimizationStatus.OPTIMAL,
+        status=OptimizationStatus.FEASIBLE,
     )
 
 
 @lru_cache(maxsize=1)
-def get_ev_model_client() -> ExperimentalEVModelClient:
-    """Load the rejected candidate only in its explicitly allowed demo mode."""
-    return ExperimentalEVModelClient(demo_mode=True)
+def get_ev_model_client() -> OfflineDemoEVModelClientV2:
+    """Load the source-disjoint-holdout-approved v2 artifact in demo mode."""
+    return OfflineDemoEVModelClientV2(demo_mode=True)
 
 
 def run_integrated_simulation() -> dict:

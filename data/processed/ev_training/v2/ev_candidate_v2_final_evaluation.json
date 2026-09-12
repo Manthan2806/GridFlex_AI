@@ -1,0 +1,105 @@
+{
+  "candidate_version": "ev_model_candidate_v2",
+  "evaluation_status": "final_source_disjoint_holdout_evaluated_once",
+  "decision": "accepted_for_offline_demo",
+  "deployment_allowed": false,
+  "demo_allowed": true,
+  "holdout_provenance": {
+    "resource_count": 210,
+    "row_count": 6300,
+    "original_acn_source_count": 700,
+    "new_acn_source_count": 210,
+    "source_overlap_count": 0,
+    "prepared_holdout_canonical_sha256": "1d6a66680b3ce92048342bf2a4534b52587939fbbe1a3aaf7ac7c3c5f171cd82"
+  },
+  "result": {
+    "row_count": 6300,
+    "baseline_metrics": {
+      "row_count": 6300,
+      "mae_ratio": 0.160162,
+      "rmse_ratio": 0.230715,
+      "bias_ratio": 0.000567,
+      "mean_overestimation_ratio": 0.080364,
+      "mae_kw": 0.70723,
+      "rmse_kw": 1.371467,
+      "bias_kw": -0.003515,
+      "mean_overestimation_kw": 0.351858,
+      "prediction_bound_violations": 0
+    },
+    "expected_metrics": {
+      "row_count": 6300,
+      "mae_ratio": 0.153383,
+      "rmse_ratio": 0.218603,
+      "bias_ratio": 0.000305,
+      "mean_overestimation_ratio": 0.076844,
+      "mae_kw": 0.683852,
+      "rmse_kw": 1.301609,
+      "bias_kw": -0.010453,
+      "mean_overestimation_kw": 0.336699,
+      "prediction_bound_violations": 0
+    },
+    "trusted_metrics": {
+      "row_count": 6300,
+      "mae_ratio": 0.331463,
+      "rmse_ratio": 0.364465,
+      "bias_ratio": -0.274168,
+      "mean_overestimation_ratio": 0.028647,
+      "mae_kw": 1.525163,
+      "rmse_kw": 2.325978,
+      "bias_kw": -1.2858,
+      "mean_overestimation_kw": 0.119681,
+      "prediction_bound_violations": 0
+    },
+    "safety": {
+      "overall_overprediction_rate_percent": 13.174603,
+      "maximum_allowed_overprediction_rate_percent": 15.0,
+      "dispatch_groups": {
+        "small": {
+          "row_count": 2289,
+          "overprediction_rate_percent": 13.018785,
+          "maximum_allowed_percent": 15.0,
+          "passes": true
+        },
+        "medium": {
+          "row_count": 2023,
+          "overprediction_rate_percent": 14.829461,
+          "maximum_allowed_percent": 15.0,
+          "passes": true
+        },
+        "large": {
+          "row_count": 1988,
+          "overprediction_rate_percent": 11.67002,
+          "maximum_allowed_percent": 15.0,
+          "passes": true
+        }
+      },
+      "mean_expected_kw": 2.55504,
+      "mean_trusted_kw": 1.279693,
+      "trusted_kw_retained_percent": 50.085067,
+      "minimum_retention_percent": 50.0
+    },
+    "acceptance_checks": {
+      "expected_mae_ratio_beats_baseline": true,
+      "expected_mae_kw_beats_baseline": true,
+      "all_dispatch_groups_pass_overprediction_limit": true,
+      "overall_passes_overprediction_limit": true,
+      "trusted_kw_retention_passes_floor": true,
+      "trusted_never_exceeds_expected": true,
+      "predictions_are_bounded": true,
+      "acn_sources_are_disjoint": true
+    },
+    "accepted": true
+  },
+  "limitations": [
+    "The holdout uses new real ACN session structures but synthetic EV behaviour.",
+    "This is not real Ahmedabad or production grid validation.",
+    "Candidate 1's consumed holdout was not reused.",
+    "Offline gate acceptance permits a hackathon demo, not real dispatch."
+  ],
+  "model_artifact": {
+    "saved": true,
+    "use": "offline_hackathon_demo_only",
+    "path": "ai_ml\\EV_model\\artifacts\\ev_candidate_v2_demo_bundle.joblib",
+    "sha256": "09fba63bfda121c6e67c01f5ae775879e233b9b19c332db1b8263bde842802dd"
+  }
+}

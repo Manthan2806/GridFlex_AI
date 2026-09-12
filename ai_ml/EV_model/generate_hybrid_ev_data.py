@@ -6,11 +6,14 @@ import argparse
 import csv
 import gzip
 import hashlib
+import http.client
 import io
 import json
 import math
 import random
 import statistics
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -37,10 +40,32 @@ class Config:
     generator_version: str = GENERATOR_VERSION
 
 
-def _request_json(url: str) -> dict:
+def _request_bytes(url: str, *, timeout: int, attempts: int = 5) -> bytes:
+    """Download with bounded retries for interrupted GitHub chunked responses."""
+    if attempts < 1:
+        raise ValueError("attempts must be at least one")
     request = urllib.request.Request(url, headers={"User-Agent": "GridFlex-AI"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return json.load(response)
+    retryable = (
+        http.client.IncompleteRead,
+        TimeoutError,
+        ConnectionError,
+        json.JSONDecodeError,
+        urllib.error.URLError,
+    )
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.read()
+        except retryable:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(2**attempt)
+    raise AssertionError("retry loop exited unexpectedly")
+
+
+def _request_json(url: str) -> dict:
+    payload = _request_bytes(url, timeout=60)
+    return json.loads(payload.decode("utf-8"))
 
 
 def _tree(sha: str) -> list[dict]:
@@ -84,9 +109,7 @@ def _download_summary(path: str) -> dict[str, object]:
         f"https://raw.githubusercontent.com/{ACN_REPOSITORY}/"
         f"{ACN_COMMIT}/{encoded}"
     )
-    request = urllib.request.Request(url, headers={"User-Agent": "GridFlex-AI"})
-    with urllib.request.urlopen(request, timeout=90) as response:
-        compressed = response.read()
+    compressed = _request_bytes(url, timeout=90)
     text = gzip.decompress(compressed).decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
     rows = list(reader)
@@ -193,7 +216,32 @@ def _cached_source_summaries(
     return summaries, metadata
 
 
-def generate(config: Config, output_root: Path) -> dict[str, object]:
+def _excluded_source_paths(path: Path | None) -> frozenset[str]:
+    """Load ACN source-session paths that must not appear in a new dataset."""
+    if path is None:
+        return frozenset()
+    if not path.is_file():
+        raise FileNotFoundError(f"excluded-source CSV does not exist: {path}")
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if "source_session_path" not in (reader.fieldnames or ()):
+            raise ValueError("excluded-source CSV is missing source_session_path")
+        values = {
+            row["source_session_path"].strip()
+            for row in reader
+            if row.get("source_session_path", "").strip()
+        }
+    if not values:
+        raise ValueError("excluded-source CSV contains no source sessions")
+    return frozenset(values)
+
+
+def generate(
+    config: Config,
+    output_root: Path,
+    *,
+    excluded_sources: frozenset[str] = frozenset(),
+) -> dict[str, object]:
     source_dir = output_root / "source_samples"
     ev_dir = output_root / "ev"
     behaviour_dir = output_root / "behavior"
@@ -209,6 +257,10 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
     cached = _cached_source_summaries(
         source_path, metadata_path, config.resource_count, config.seed
     )
+    if cached is not None and any(
+        str(row["source_session_path"]) in excluded_sources for row in cached[0]
+    ):
+        cached = None
     reused_source_summaries = cached is not None
     if cached is not None:
         summaries, previous_metadata = cached
@@ -219,7 +271,9 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
             previous_metadata.get("candidate_sessions_examined", len(summaries))
         )
     else:
-        all_paths = sorted(_list_session_files())
+        all_paths = [
+            path for path in sorted(_list_session_files()) if path not in excluded_sources
+        ]
         if len(all_paths) < config.resource_count:
             raise ValueError("ACN archive contains fewer sessions than requested")
         candidate_paths = list(all_paths)
@@ -356,6 +410,12 @@ def generate(config: Config, output_root: Path) -> dict[str, object]:
         "candidate_sessions_examined": examined_count,
         "reused_pinned_source_summaries": reused_source_summaries,
         "sample_method": "sorted paths then seeded random sample without replacement",
+        "excluded_source_session_count": len(excluded_sources),
+        "source_disjointness_rule": (
+            "All listed excluded ACN source sessions were removed before sampling."
+            if excluded_sources
+            else "No source-session exclusion list was supplied."
+        ),
         "geographic_scope": "ACN US workplace sites; GridFlex locations are synthetic",
         "scenario_date": SCENARIO_DATE.isoformat(),
         "time_grid_minutes": 15,
@@ -401,10 +461,16 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--resource-count", type=int, default=DEFAULT_RESOURCE_COUNT)
     parser.add_argument("--history-per-resource", type=int, default=DEFAULT_HISTORY_PER_RESOURCE)
+    parser.add_argument(
+        "--exclude-sources",
+        type=Path,
+        help="CSV containing source_session_path values that must not be sampled",
+    )
     args = parser.parse_args()
     result = generate(
         Config(args.seed, args.resource_count, args.history_per_resource),
         args.output_root,
+        excluded_sources=_excluded_source_paths(args.exclude_sources),
     )
     print(json.dumps(result, indent=2))
 
