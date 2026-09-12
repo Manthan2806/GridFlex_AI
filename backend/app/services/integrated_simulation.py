@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
-from typing import Dict, Union
+from datetime import datetime, timedelta, timezone
+from functools import lru_cache
+from typing import Dict
 
 from backend.app.domain.enums import OptimizationStatus, ResourceType
 from backend.app.domain.models import FlexibilityResource
+from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
 from backend.app.schemas.dispatch import DispatchInstruction, DispatchPlan
 from backend.app.schemas.runs import SimulationInput, SimulationOutput
 from backend.app.schemas.scenarios import Scenario
@@ -35,8 +37,8 @@ EV_DATA = (
 )
 
 
-def build_ev_scenario() -> Scenario:
-    earliest_start = datetime.utcnow()
+def build_ev_scenario(event_time: datetime | None = None) -> Scenario:
+    earliest_start = event_time or datetime.now(timezone.utc)
     latest_end = earliest_start + timedelta(hours=4)
     resources = [
         FlexibilityResource(
@@ -91,28 +93,53 @@ def build_dispatch_plan(trusted_kw_values: Dict[str, float]) -> DispatchPlan:
     )
 
 
-def _trusted_kw_values() -> Dict[str, float]:
-    """Use the same trust calculation as the existing simplified endpoint."""
-    values = {}
-    for ev in EV_DATA:
-        potential_kw = ev["rated_power_kw"]
-        confidence = 1 - ev["override_rate"]
-        expected_kw = potential_kw * ev["availability_rate"]
-        values[ev["id"]] = potential_kw * ev["availability_rate"] * confidence
-    return values
+@lru_cache(maxsize=1)
+def get_ev_model_client() -> ExperimentalEVModelClient:
+    """Load the rejected candidate only in its explicitly allowed demo mode."""
+    return ExperimentalEVModelClient(demo_mode=True)
 
 
-def run_integrated_simulation() -> Union[SimulationOutput, dict]:
-    try:
-        scenario = build_ev_scenario()
-        dispatch_plan = build_dispatch_plan(_trusted_kw_values())
-        simulation_input = SimulationInput(
-            scenario=scenario,
-            initial_resource_states={},
-            renewable_demand_forecasts=[],
-            dispatch_plan=dispatch_plan,
-            system_constraints={},
+def run_integrated_simulation() -> dict:
+    """Run the demo from ML trust estimation through dispatch and simulation."""
+    scenario = build_ev_scenario()
+    model_client = get_ev_model_client()
+    predictions = {
+        resource.id: model_client.predict_resource(
+            resource,
+            scenario.resources[0].earliest_start,
+            requested_dispatch_kw=resource.rated_power_kw,
         )
-        return SimulationAdapter().run_simulation(simulation_input)
-    except Exception as exc:
-        return {"error": str(exc), "stage": "integrated_simulation"}
+        for resource in scenario.resources
+    }
+    trusted_kw_values = {
+        resource_id: prediction.trust_state.trusted_kw
+        for resource_id, prediction in predictions.items()
+    }
+    dispatch_plan = build_dispatch_plan(trusted_kw_values)
+    simulation_input = SimulationInput(
+        scenario=scenario,
+        initial_resource_states={},
+        renewable_demand_forecasts=[],
+        dispatch_plan=dispatch_plan,
+        system_constraints={},
+    )
+    simulation_output: SimulationOutput = SimulationAdapter().run_simulation(simulation_input)
+    first_prediction = next(iter(predictions.values()))
+
+    return {
+        "demo_mode": True,
+        "label": first_prediction.label,
+        "release_status": first_prediction.release_status,
+        "warning": "Experimental EV estimate; not approved for real grid dispatch.",
+        "trust_states": [
+            {
+                "resource_id": resource_id,
+                **prediction.trust_state.model_dump(),
+                "dispatch_group": prediction.dispatch_group,
+                "used_demo_fallbacks": list(prediction.used_demo_fallbacks),
+            }
+            for resource_id, prediction in predictions.items()
+        ],
+        "dispatch_plan": dispatch_plan.model_dump(mode="json"),
+        "simulation": simulation_output.model_dump(mode="json"),
+    }

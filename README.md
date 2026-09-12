@@ -4,6 +4,30 @@
 
 GridFlex AI is a simulation-first flexibility intelligence and orchestration system for utilities and demand-response aggregators. It coordinates flexible electricity demand with renewable-energy availability by representing heterogeneous flexible loads using their actual operational constraints and estimating how reliably that flexibility can actually be delivered.
 
+## Current Hackathon Prototype
+
+The runnable prototype currently covers EV resources only. It connects an experimental
+Random Forest estimate to a FastAPI endpoint, creates a feeder-limited dispatch plan,
+and executes that plan in the 15-minute simulation engine. The EV model did not pass
+its final deployment gate, so every API result is explicitly labelled as a demo-only
+offline estimate. The frontend, production database, optimizer, water-heater model,
+and industrial-load model remain planned work.
+
+### Run the integrated demo
+
+From the repository root:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+uvicorn backend.app.main:app --reload --port 8000
+```
+
+Open `http://127.0.0.1:8000/docs` and run `POST /simulate/full`. The first request
+trains the locked experimental candidate in memory, so it can take longer than later
+requests. Run the automated checks with `pytest -q`.
+
 ## Core Concept
 
 **Trusted Flexibility.** Theoretical flexibility says "this load can shift X kW." Trusted flexibility says "this load can *reliably* deliver Y kW at time t, given its operational constraints, historical response behavior, and current uncertainty." GridFlex AI converts optimistic capacity into a time-dependent, confidence-weighted trust state before dispatch, then verifies actual response and learns from it.
@@ -47,7 +71,7 @@ See ARCHITECTURE.md for component boundaries, data flow, failure boundaries, and
 | Database | PostgreSQL |
 | Optimization | OR-Tools CP-SAT |
 | Simulation | Custom Python engine |
-| AI/ML | Statistical/ML (specific model TBD) |
+| AI/ML | Experimental Random Forest EV estimator (not deployment-approved) |
 | Time Resolution | 15 minutes (MVP) |
 
 ## Repository Structure
