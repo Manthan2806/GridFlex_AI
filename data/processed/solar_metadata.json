@@ -1,0 +1,41 @@
+{
+  "source": "NASA POWER Hourly API",
+  "source_documentation": "https://power.larc.nasa.gov/docs/services/api/temporal/hourly/",
+  "source_download_url": "https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude=72.5714&latitude=23.0225&start=20240101&end=20241231&format=JSON&time-standard=UTC",
+  "generator_version": "gridflex-nasa-power-solar-v2",
+  "location": {
+    "name": "Ahmedabad demonstration point",
+    "latitude": 23.0225,
+    "longitude": 72.5714,
+    "scope_note": "Single demonstration point; not representative of all Gujarat or India."
+  },
+  "period": {
+    "start": "20240101",
+    "end": "20241231"
+  },
+  "time_standard": "UTC",
+  "source_resolution": "hourly",
+  "processed_resolution": "15 minutes",
+  "resampling": "repeat each hourly average for its four 15-minute intervals",
+  "classification": "COMPUTED from REAL/PUBLIC hourly data",
+  "reference_pv_capacity_kw": 1000.0,
+  "solar_15min_rows": 35136,
+  "missing_solar_hours": 0,
+  "limitations": [
+    "This legacy demonstration solar series is for 2024, not 2025.",
+    "The 15-minute rows repeat hourly irradiance rather than adding observations.",
+    "The PV conversion is simplified and excludes orientation, shading, inverter, temperature, and loss modelling."
+  ],
+  "files": {
+    "raw\\solar\\nasa_power_ahmedabad_solar_2024.json": {
+      "bytes": 161310,
+      "sha256": "63777692458dbd99e961d3ef173ed553c625640a4ff292aca44cdcf8058186f9",
+      "classification": "REAL/PUBLIC raw provider response"
+    },
+    "processed\\solar_15min\\nasa_power_ahmedabad_solar_15min_2024.csv": {
+      "bytes": 2902614,
+      "sha256": "da2e9f630a0f7f70f50ae047c7e579f57a280e6f179b1c60c280c34a82fbb92b",
+      "classification": "COMPUTED from REAL/PUBLIC hourly data"
+    }
+  }
+}

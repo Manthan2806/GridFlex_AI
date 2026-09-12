@@ -38,8 +38,11 @@ Generated device-level flexibility and behavior data. **Synthetic data must reco
 ## Current Status
 
 - EV data: 700 ACN-anchored synthetic resource profiles and 21,000 behavior rows.
-- Solar/weather data: real NASA POWER hourly data for an Ahmedabad demo point,
+- Solar data: legacy NASA POWER hourly data for an Ahmedabad demonstration point,
   expanded to clearly labelled 15-minute computed rows for 2024.
+- Weather data: real Ahmedabad Airport (VAAH) station observations for 2025,
+  predominantly recorded every 30 minutes and retained at their original times.
+  No weather readings are interpolated or invented.
 - Demand data: real all-India operational SCADA snapshots at 15-minute timestamps
   for 344 complete days in 2025. The same source also provides national solar,
   wind, hydro, thermal, and total generation readings.
@@ -55,3 +58,13 @@ Rebuild the demand checkpoint from the repository root with:
 ```text
 python -m ai_ml.prepare_demand_data
 ```
+
+Rebuild the real weather checkpoint with:
+
+```text
+python -m ai_ml.prepare_weather_data
+```
+
+Weather observations do not occur at every 15-minute simulation timestamp. The
+model should use the most recent known observation and must not describe the
+carried-forward value as a new measurement.
