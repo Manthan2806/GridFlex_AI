@@ -1,0 +1,88 @@
+import pytest
+from datetime import datetime, timedelta, timezone
+
+from backend.app.domain.enums import ResourceType
+from backend.app.domain.models import FlexibilityResource
+from backend.app.schemas.scenarios import Scenario
+from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
+from backend.app.services.trust_hydration import build_optimizer_context
+from backend.app.services.dispatch_service import MVPOptimizer
+from simulation.adapter import SimulationAdapter
+from tests.validation.verifier import SimulationVerifier
+from experiments.runner import ExperimentRunner
+
+def _make_resource(res_id: str, max_power: float = 7.2, required_kwh: float = 4.0) -> FlexibilityResource:
+    start = datetime(2026, 9, 12, 10, 0, tzinfo=timezone.utc)
+    return FlexibilityResource(
+        id=res_id,
+        type=ResourceType.EV,
+        location_id="test-loc",
+        rated_power_kw=max_power,
+        earliest_start=start,
+        latest_end=start + timedelta(hours=2),
+        required_kwh=required_kwh,
+        minimum_kwh=0.0,
+        maximum_kwh=20.0,
+        minimum_duration=15,
+        maximum_duration=120,
+        deadline=start + timedelta(hours=2),
+        min_power=0.0,
+        max_power=max_power,
+        historical_response=[],
+        override_rate=0.0,
+        availability_rate=1.0,
+    )
+
+def test_mvp_e2e_experiment_runner():
+    """
+    Proves the full MVP pipeline:
+    Scenario -> AI/ML -> TrustState -> Baseline + Trust-aware optimizer 
+    -> DispatchPlans -> SimulationAdapter -> Verification -> Comparison
+    """
+    resources = [
+        _make_resource("ev-e2e-001"),
+        _make_resource("ev-e2e-002")
+    ]
+    scenario = Scenario(
+        scenario_id="scen-e2e-test",
+        resources=resources,
+        disruption_specs={},
+        seeds={"master": 99}
+    )
+    event_time = resources[0].earliest_start
+    
+    # 1. AI/ML Inference
+    client = ExperimentalEVModelClient(demo_mode=True)
+    ctx = build_optimizer_context(client, resources, event_time)
+    
+    assert len(ctx["trust_data"]) == 2
+    
+    # 2. Setup ExperimentRunner
+    optimizer = MVPOptimizer()
+    adapter = SimulationAdapter()
+    verifier = SimulationVerifier()
+    runner = ExperimentRunner(strategy=optimizer, verifier=verifier, adapter=adapter)
+    
+    # 3. Run Paired Experiment
+    comparison = runner.run_paired_experiment(
+        scenario=scenario,
+        renewable_demand_forecasts=[],
+        context=ctx
+    )
+    
+    # 4. Verify output Comparison
+    assert comparison.scenario_id == "scen-e2e-test"
+    assert comparison.experiment_seed == 99
+    
+    base_res = comparison.baseline_result
+    trust_res = comparison.trust_aware_result
+    
+    assert base_res is not None
+    assert trust_res is not None
+    
+    # Check that both ran successfully through verification
+    assert isinstance(base_res.overcommitment, float)
+    assert isinstance(trust_res.overcommitment, float)
+    
+    # Trust-aware should generally have <= overcommitment than baseline in uncertain scenarios
+    assert trust_res.overcommitment <= base_res.overcommitment

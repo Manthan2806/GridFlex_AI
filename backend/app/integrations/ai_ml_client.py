@@ -58,7 +58,7 @@ def _trust_state_from_output(output: Mapping[str, float]) -> TrustState:
     expected_kw = float(output["expected_kw"])
     trusted_kw = float(output["trusted_kw"])
     potential_kw = float(output["requested_dispatch_kw"])
-    confidence = trusted_kw / expected_kw if expected_kw > 0.0 else 0.0
+    confidence = float(output.get("safety_coverage", 0.0))
     return TrustState(
         potential_kw=potential_kw,
         expected_kw=expected_kw,

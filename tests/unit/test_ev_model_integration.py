@@ -23,12 +23,17 @@ def test_rejected_model_requires_explicit_demo_mode():
 
 def test_prediction_maps_to_backend_trust_contract():
     trust = _trust_state_from_output(
-        {"requested_dispatch_kw": 4.0, "expected_kw": 2.0, "trusted_kw": 1.4}
+        {
+            "requested_dispatch_kw": 4.0,
+            "expected_kw": 2.0,
+            "trusted_kw": 1.4,
+            "safety_coverage": 0.85,
+        }
     )
     assert trust.potential_kw == 4.0
     assert trust.expected_kw == 2.0
     assert trust.trusted_kw == 1.4
-    assert trust.confidence == pytest.approx(0.7)
+    assert trust.confidence == 0.85
 
 
 def test_demo_client_predicts_from_locked_features():
