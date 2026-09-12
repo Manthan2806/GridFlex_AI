@@ -1,0 +1,330 @@
+{
+  "tuning_version": "ev_random_forest_tuning_v1",
+  "scope": "Small fixed Random Forest search on hybrid/synthetic EV validation data.",
+  "selection_rule": [
+    "lowest validation mae_ratio",
+    "lowest validation mae_kw as tie-breaker",
+    "candidate name as deterministic final tie-breaker"
+  ],
+  "candidate_count": 8,
+  "split_usage": {
+    "training": {
+      "row_count": 14700,
+      "targets_read": true
+    },
+    "validation": {
+      "row_count": 3150,
+      "targets_read": true
+    },
+    "test": {
+      "row_count": 3150,
+      "targets_read": false,
+      "status": "sealed"
+    }
+  },
+  "candidates": [
+    {
+      "name": "control",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 5,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.157309,
+        "rmse_ratio": 0.219587,
+        "bias_ratio": -0.004107,
+        "mean_overestimation_ratio": 0.076601,
+        "mae_kw": 0.716909,
+        "rmse_kw": 1.446271,
+        "bias_kw": 0.014093,
+        "mean_overestimation_kw": 0.365501,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "shallower",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 8,
+        "min_samples_leaf": 5,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.154332,
+        "rmse_ratio": 0.218952,
+        "bias_ratio": 0.001128,
+        "mean_overestimation_ratio": 0.07773,
+        "mae_kw": 0.703521,
+        "rmse_kw": 1.447476,
+        "bias_kw": 0.039748,
+        "mean_overestimation_kw": 0.371634,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "deeper",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 16,
+        "min_samples_leaf": 5,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.159369,
+        "rmse_ratio": 0.220326,
+        "bias_ratio": -0.007571,
+        "mean_overestimation_ratio": 0.075899,
+        "mae_kw": 0.726975,
+        "rmse_kw": 1.444342,
+        "bias_kw": -0.004199,
+        "mean_overestimation_kw": 0.361388,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "unlimited_depth",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": null,
+        "min_samples_leaf": 5,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.162447,
+        "rmse_ratio": 0.221103,
+        "bias_ratio": -0.012849,
+        "mean_overestimation_ratio": 0.074799,
+        "mae_kw": 0.737768,
+        "rmse_kw": 1.442011,
+        "bias_kw": -0.024972,
+        "mean_overestimation_kw": 0.356398,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "smaller_leaves",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 2,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.159811,
+        "rmse_ratio": 0.220591,
+        "bias_ratio": -0.008293,
+        "mean_overestimation_ratio": 0.075759,
+        "mae_kw": 0.733168,
+        "rmse_kw": 1.441772,
+        "bias_kw": -0.015019,
+        "mean_overestimation_kw": 0.359075,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "larger_leaves",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 10,
+        "max_features": "sqrt",
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.15543,
+        "rmse_ratio": 0.219215,
+        "bias_ratio": -0.001142,
+        "mean_overestimation_ratio": 0.077144,
+        "mae_kw": 0.708256,
+        "rmse_kw": 1.446928,
+        "bias_kw": 0.028133,
+        "mean_overestimation_kw": 0.368195,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "half_features",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 5,
+        "max_features": 0.5,
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.157916,
+        "rmse_ratio": 0.219877,
+        "bias_ratio": -0.005803,
+        "mean_overestimation_ratio": 0.076057,
+        "mae_kw": 0.721907,
+        "rmse_kw": 1.439221,
+        "bias_kw": -0.000259,
+        "mean_overestimation_kw": 0.360824,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "all_features",
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 5,
+        "max_features": 1.0,
+        "random_state": 2806,
+        "n_jobs": 1
+      },
+      "validation_metrics": {
+        "row_count": 3150,
+        "mae_ratio": 0.159261,
+        "rmse_ratio": 0.220718,
+        "bias_ratio": -0.007568,
+        "mean_overestimation_ratio": 0.075847,
+        "mae_kw": 0.727988,
+        "rmse_kw": 1.440265,
+        "bias_kw": -0.008728,
+        "mean_overestimation_kw": 0.35963,
+        "prediction_bound_violations": 0
+      }
+    }
+  ],
+  "selected": {
+    "name": "shallower",
+    "parameters": {
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt",
+      "random_state": 2806,
+      "n_jobs": 1
+    },
+    "validation_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.154332,
+      "rmse_ratio": 0.218952,
+      "bias_ratio": 0.001128,
+      "mean_overestimation_ratio": 0.07773,
+      "mae_kw": 0.703521,
+      "rmse_kw": 1.447476,
+      "bias_kw": 0.039748,
+      "mean_overestimation_kw": 0.371634,
+      "prediction_bound_violations": 0
+    }
+  },
+  "comparison": {
+    "baseline_name": "rolling_history",
+    "baseline_mae_ratio": 0.162777,
+    "selected_mae_ratio_improvement_percent_vs_baseline": 5.188079,
+    "baseline_mae_kw": 0.740847,
+    "selected_mae_kw_improvement_percent_vs_baseline": 5.038287,
+    "control_mae_ratio": 0.157309,
+    "selected_mae_ratio_improvement_percent_vs_control": 1.892454,
+    "control_mae_kw": 0.716909,
+    "selected_mae_kw_improvement_percent_vs_control": 1.867462
+  },
+  "selected_feature_importance": [
+    {
+      "feature": "required_energy_share",
+      "importance": 0.291468
+    },
+    {
+      "feature": "prior_delivery_ratio_mean",
+      "importance": 0.206639
+    },
+    {
+      "feature": "prior_delivery_ratio_ema",
+      "importance": 0.197792
+    },
+    {
+      "feature": "average_required_power_kw",
+      "importance": 0.076378
+    },
+    {
+      "feature": "prior_delivery_ratio_std",
+      "importance": 0.05716
+    },
+    {
+      "feature": "connection_window_hours",
+      "importance": 0.044625
+    },
+    {
+      "feature": "event_hour",
+      "importance": 0.016494
+    },
+    {
+      "feature": "rated_power_kw",
+      "importance": 0.013803
+    },
+    {
+      "feature": "prior_event_count",
+      "importance": 0.013352
+    },
+    {
+      "feature": "prior_availability_rate",
+      "importance": 0.011683
+    },
+    {
+      "feature": "required_kwh",
+      "importance": 0.010814
+    },
+    {
+      "feature": "prior_override_rate",
+      "importance": 0.010398
+    },
+    {
+      "feature": "max_power_kw",
+      "importance": 0.009299
+    },
+    {
+      "feature": "battery_capacity_kwh",
+      "importance": 0.00904
+    },
+    {
+      "feature": "soc_gap_pct",
+      "importance": 0.008484
+    },
+    {
+      "feature": "target_soc_pct",
+      "importance": 0.008104
+    },
+    {
+      "feature": "arrival_soc_pct",
+      "importance": 0.007665
+    },
+    {
+      "feature": "event_weekday",
+      "importance": 0.006802
+    }
+  ],
+  "selection_status": "validation_selected_test_still_sealed",
+  "model_artifact_saved": false,
+  "model_artifact_note": "Save only after the selected settings receive final holdout evaluation.",
+  "input": {
+    "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+    "sha256": "ad722fed3c80feea2fc6846bf2c185667f30f81a7a776a70f5de6ea5bf9e4e65"
+  },
+  "baseline_report": {
+    "path": "data\\processed\\ev_training\\ev_baseline_evaluation.json",
+    "sha256": "10e0e1fb9a242bf06857558a5d9d8a214e52f4013bd50423f3b4abbcb943869d"
+  }
+}
