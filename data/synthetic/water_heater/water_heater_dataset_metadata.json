@@ -1,0 +1,54 @@
+{
+  "seed": 2806,
+  "resource_count": 700,
+  "history_per_resource": 30,
+  "generator_version": "gridflex-water-heater-synthetic-v1",
+  "scenario_date": "2026-01-15T00:00:00+05:30",
+  "time_grid_minutes": 15,
+  "history_row_count": 21000,
+  "heater_type_counts": {
+    "heat_pump": 450,
+    "electric_resistance": 250
+  },
+  "resource_split_counts": {
+    "train": 490,
+    "validation": 105,
+    "test": 105
+  },
+  "split_rule": "resource-level 70/15/15",
+  "classification": "SYNTHETIC",
+  "hash_normalization": "CSV line endings normalized to LF before SHA-256",
+  "calibration_source": {
+    "name": "BPA CTA-2045 Water Heater Demonstration Final Report",
+    "url": "https://www.bpa.gov/-/media/Aep/energy-efficiency/demand-response/20181118-cta-2045-final-report.pdf",
+    "facts_used": [
+      "145 heat-pump and 86 electric-resistance heaters",
+      "CTA-2045 command categories include shed, load up, and customer override"
+    ]
+  },
+  "field_provenance": {
+    "REAL": [],
+    "COMPUTED_FROM_REAL": [],
+    "SYNTHETIC": [
+      "all resource attributes",
+      "all event timestamps, states, temperatures, draws, availability, overrides, and outcomes",
+      "potential_kw, delivered_kw, and response_ratio"
+    ]
+  },
+  "files": {
+    "water_heater_resources.csv": {
+      "rows": 700,
+      "sha256": "d5c9f7379efd7edb5d1220b0f346998152a55d14f16cccb3a4c7dfc4e173420e"
+    },
+    "behavior/water_heater_historical_response.csv": {
+      "rows": 21000,
+      "sha256": "3a85cfbd1c65cdd4f43212f30ae8f00501be3c256bcfced32abac754b1b84cc3"
+    }
+  },
+  "limitations": [
+    "This is not BPA device-level telemetry and is not real household data.",
+    "Only the published BPA heater-type mix and command vocabulary calibrate the generator.",
+    "Temperature, hot-water draw, availability, overrides, and response outcomes are synthetic.",
+    "The data supports prototype development only; it is not field validation evidence."
+  ]
+}

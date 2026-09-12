@@ -1,0 +1,79 @@
+{
+  "status": "PASS",
+  "dataset_classification": "SYNTHETIC",
+  "resource_rows": 700,
+  "history_rows": 21000,
+  "unique_resources_in_history": 700,
+  "duplicate_resource_timestamp_events": 0,
+  "heater_type_counts": {
+    "electric_resistance": 250,
+    "heat_pump": 450
+  },
+  "resource_split_counts": {
+    "test": 105,
+    "train": 490,
+    "validation": 105
+  },
+  "history_split_counts": {
+    "test": 3150,
+    "train": 14700,
+    "validation": 3150
+  },
+  "flex_direction_counts": {
+    "increase": 4581,
+    "reduce": 16419
+  },
+  "outcome_counts": {
+    "delivered": 5679,
+    "override": 4253,
+    "partial": 3952,
+    "unavailable": 7116
+  },
+  "availability_counts": {
+    "false": 7116,
+    "true": 13884
+  },
+  "override_counts": {
+    "false": 14109,
+    "true": 6891
+  },
+  "timestamp_start": "2025-06-19T06:00:00+05:30",
+  "timestamp_end": "2025-12-14T21:45:00+05:30",
+  "mean_potential_kw": 3.59001,
+  "mean_delivered_kw": 1.513546,
+  "mean_response_ratio": 0.421872,
+  "label_columns_do_not_use_as_same_event_features": [
+    "delivered_kw",
+    "response_ratio",
+    "is_available",
+    "has_override",
+    "outcome"
+  ],
+  "candidate_pre_dispatch_inputs": [
+    "heater_type",
+    "rated_power_kw",
+    "tank_capacity_l",
+    "minimum_comfort_temp_c",
+    "maximum_temp_c",
+    "recovery_rate_c_per_hour",
+    "baseline_duty_cycle",
+    "timestamp-derived hour and weekday",
+    "flex_direction",
+    "requested_state",
+    "pre_dispatch_temp_c",
+    "pre_dispatch_power_kw",
+    "hot_water_draw_l",
+    "potential_kw",
+    "strictly prior historical response features"
+  ],
+  "source_hashes_verified": true,
+  "failure_count": 0,
+  "failures": [],
+  "failure_output_truncated": false,
+  "limitations": [
+    "This is not BPA device-level telemetry and is not real household data.",
+    "Only the published BPA heater-type mix and command vocabulary calibrate the generator.",
+    "Temperature, hot-water draw, availability, overrides, and response outcomes are synthetic.",
+    "The data supports prototype development only; it is not field validation evidence."
+  ]
+}
