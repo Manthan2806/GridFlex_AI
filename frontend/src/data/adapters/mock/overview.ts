@@ -66,7 +66,7 @@ const overviewData: OverviewData = {
       id: "activity-002",
       type: "simulation",
       description:
-        "Scenario DR-2026-Q3-001 simulated with seed 42 across 8-hour horizon.",
+        "Scenario DR-2026-Q3-001 simulated with seed 42 across 8-minute horizon.",
       timestamp: "2026-09-12T08:30:00Z",
     },
     {
@@ -100,5 +100,21 @@ export class MockOverviewAdapter implements DataAdapter {
 
   async getFlexibilityResources(): Promise<never> {
     throw new Error("Overview adapter does not provide flexibility resources")
+  }
+
+  async runSimulation(): Promise<SimulationResult> {
+    // Deterministic mock simulation result for F3 Dispatch
+    // This represents the authoritative simulation outcome for the recommended dispatch
+    return {
+      id: "sim-2026-09-12-001",
+      status: "committed",
+      actualFlexibilityKw: 385,
+      renewableAbsorptionKwh: 1250,
+      constraintViolations: [],
+      deadlineViolations: [],
+      reboundKwh: 0,
+      deliveryRatio: 1,
+      timestamp: "2026-09-12T08:30:00Z",
+    }
   }
 }

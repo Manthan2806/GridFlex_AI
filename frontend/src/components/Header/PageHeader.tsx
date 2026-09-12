@@ -1,4 +1,3 @@
-import { ScenarioContext } from "../Scenario/ScenarioContext"
 import { colors } from "../../styles/tokens/colors"
 import { fonts, fontSizes, fontWeights } from "../../styles/tokens/typography"
 import { spacing } from "../../styles/tokens/spacing"
@@ -98,9 +97,7 @@ export function PageHeader({
           ) : null}
         </div>
 
-        {state === "success" && scenario ? (
-          <ScenarioContext scenario={scenario} />
-        ) : null}
+        {/* Scenario context is rendered by AppShell header; do not duplicate here */}
       </div>
     </header>
   )

@@ -1,6 +1,7 @@
 import { colors } from "../../styles/tokens/colors"
 import { fonts, fontSizes, fontWeights } from "../../styles/tokens/typography"
 import { spacing } from "../../styles/tokens/spacing"
+import { radii } from "../../styles/tokens/radii"
 import { StatusIndicator } from "../Indicators/StatusIndicator"
 import type { FlexibilityResource } from "../../data/types/domain"
 
@@ -9,6 +10,27 @@ export interface ResourcePortfolioTableProps {
   selectedId?: string
   onRowSelect: (resource: FlexibilityResource) => void
   className?: string
+}
+
+const thStyle: React.CSSProperties = {
+  padding: `${spacing.sm} ${spacing.md}`,
+  textAlign: "left",
+  fontWeight: fontWeights.semibold,
+  color: colors.neutrals.charcoal,
+  whiteSpace: "nowrap",
+  fontSize: fontSizes.xs,
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  background: colors.neutrals.mist,
+  borderBottom: `1px solid ${colors.neutrals.lightGrey}`,
+}
+
+const tdStyle: React.CSSProperties = {
+  padding: `${spacing.sm} ${spacing.md}`,
+  color: colors.neutrals.charcoal,
+  whiteSpace: "nowrap",
+  fontSize: fontSizes.sm,
+  borderBottom: `1px solid ${colors.neutrals.mist}`,
 }
 
 export function ResourcePortfolioTable({
@@ -20,11 +42,12 @@ export function ResourcePortfolioTable({
   if (resources.length === 0) {
     return (
       <div
+        className="resource-portfolio-table"
         style={{
           padding: spacing.xl,
-          background: colors.neutrals.white,
+          background: colors.neutrals.warmCream,
           border: `1px solid ${colors.neutrals.mist}`,
-          borderRadius: "6px",
+          borderRadius: radii.sm,
           textAlign: "center",
           color: colors.neutrals.charcoal,
           fontFamily: fonts.body,
@@ -38,12 +61,13 @@ export function ResourcePortfolioTable({
 
   return (
     <div
-      className={className}
+      className="resource-portfolio-table"
       style={{
         overflowX: "auto",
-        background: colors.neutrals.white,
+        maxWidth: "100%",
+        background: colors.neutrals.warmCream,
         border: `1px solid ${colors.neutrals.mist}`,
-        borderRadius: "6px",
+        borderRadius: radii.sm,
       }}
     >
       <table
@@ -55,111 +79,16 @@ export function ResourcePortfolioTable({
         }}
       >
         <thead>
-          <tr
-            style={{
-              background: colors.neutrals.mist,
-              borderBottom: `1px solid ${colors.neutrals.lightGrey}`,
-            }}
-          >
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "left",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              ID
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "left",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Type
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "left",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Location
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "right",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Potential
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "right",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Expected
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "right",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Trusted
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "right",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Confidence
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "left",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Status
-            </th>
-            <th
-              style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                textAlign: "left",
-                fontWeight: fontWeights.semibold,
-                color: colors.neutrals.charcoal,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Constraint
-            </th>
+          <tr>
+            <th style={thStyle}>ID</th>
+            <th style={thStyle}>Type</th>
+            <th style={thStyle}>Location</th>
+            <th style={{ ...thStyle, textAlign: "right" }}>Potential</th>
+            <th style={{ ...thStyle, textAlign: "right" }}>Expected</th>
+            <th style={{ ...thStyle, textAlign: "right" }}>Trusted</th>
+            <th style={{ ...thStyle, textAlign: "right" }}>Confidence</th>
+            <th style={thStyle}>Status</th>
+            <th style={thStyle}>Constraint</th>
           </tr>
         </thead>
         <tbody>
@@ -173,15 +102,25 @@ export function ResourcePortfolioTable({
               if (diffHours < 2) return "warning"
               return "violation"
             })()
+
             return (
               <tr
                 key={resource.id}
                 onClick={() => onRowSelect(resource)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    onRowSelect(resource)
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-selected={isSelected}
                 style={{
                   cursor: "pointer",
                   background: isSelected
-                    ? "rgba(107, 30, 46, 0.08)"
-                    : colors.neutrals.white,
+                    ? `rgba(${colors.primary.replace("#", "")}, 0.08)`
+                    : colors.neutrals.warmCream,
                   borderBottom: `1px solid ${colors.neutrals.mist}`,
                   transition: "background 0.15s ease",
                 }}
@@ -192,97 +131,31 @@ export function ResourcePortfolioTable({
                 }}
                 onMouseLeave={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.background = colors.neutrals.white
+                    e.currentTarget.style.background = colors.neutrals.warmCream
                   }
                 }}
               >
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    color: colors.neutrals.ink,
-                    fontWeight: fontWeights.medium,
-                    fontFamily: fonts.monospace,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={{ ...tdStyle, color: colors.neutrals.ink, fontWeight: fontWeights.medium, fontFamily: fonts.monospace }}>
                   {resource.id}
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    color: colors.neutrals.charcoal,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {resource.type.replace("_", " ")}
-                </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    color: colors.neutrals.charcoal,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {resource.location_id}
-                </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    textAlign: "right",
-                    color: colors.neutrals.ink,
-                    fontFamily: fonts.monospace,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={tdStyle}>{resource.type.replace("_", " ")}</td>
+                <td style={tdStyle}>{resource.location_id}</td>
+                <td style={{ ...tdStyle, textAlign: "right", color: colors.neutrals.ink, fontFamily: fonts.monospace }}>
                   {resource.potential_kw}
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    textAlign: "right",
-                    color: colors.neutrals.ink,
-                    fontFamily: fonts.monospace,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={{ ...tdStyle, textAlign: "right", color: colors.neutrals.ink, fontFamily: fonts.monospace }}>
                   {resource.expected_kw}
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    textAlign: "right",
-                    color: colors.neutrals.ink,
-                    fontFamily: fonts.monospace,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={{ ...tdStyle, textAlign: "right", color: colors.neutrals.ink, fontFamily: fonts.monospace }}>
                   {resource.trusted_kw}
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    textAlign: "right",
-                    color: colors.neutrals.charcoal,
-                    fontFamily: fonts.monospace,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={{ ...tdStyle, textAlign: "right", fontFamily: fonts.monospace }}>
                   {Math.round(resource.confidence * 100)}%
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={tdStyle}>
                   <StatusIndicator status={resource.state} />
                 </td>
-                <td
-                  style={{
-                    padding: `${spacing.sm} ${spacing.md}`,
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <td style={tdStyle}>
                   <StatusIndicator status={constraintIndicator} />
                 </td>
               </tr>

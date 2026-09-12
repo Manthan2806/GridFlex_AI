@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { AppShell } from "../../components/Shell/AppShell"
 import { SectionHeader } from "../../components/Layout/SectionHeader"
 import { PortfolioSnapshot } from "../../components/Flexibility/PortfolioSnapshot"
 import { ResourceSearchFilters } from "../../components/Flexibility/ResourceSearchFilters"
@@ -68,50 +67,59 @@ export function FlexibilityPage() {
 
   if (loading) {
     return (
-      <AppShell currentPage="flexibility" scenario={null}>
-        <SectionHeader title="Flexibility" subtitle="Loading resource portfolio..." />
-        <div
-          style={{
-            padding: spacing.xl,
-            background: colors.neutrals.white,
-            border: `1px solid ${colors.neutrals.mist}`,
-            borderRadius: "6px",
-            textAlign: "center",
-            color: colors.neutrals.charcoal,
-            fontFamily: fonts.body,
-            fontSize: fontSizes.sm,
-          }}
-        >
-          Loading flexibility resources...
-        </div>
-      </AppShell>
+      <main
+        className="flexibility-page"
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: spacing.xl,
+          background: colors.neutrals.white,
+          border: `1px solid ${colors.neutrals.mist}`,
+          borderRadius: "6px",
+          textAlign: "center",
+          color: colors.neutrals.charcoal,
+          fontFamily: fonts.body,
+          fontSize: fontSizes.sm,
+        }}
+      >
+        Loading flexibility resources...
+      </main>
     )
   }
 
   if (error) {
     return (
-      <AppShell currentPage="flexibility" scenario={null}>
-        <SectionHeader title="Flexibility" />
-        <div
-          style={{
-            padding: spacing.xl,
-            background: colors.neutrals.white,
-            border: `1px solid ${colors.primary}`,
-            borderRadius: "6px",
-            textAlign: "center",
-            color: colors.primary,
-            fontFamily: fonts.body,
-            fontSize: fontSizes.sm,
-          }}
-        >
-          {error}
-        </div>
-      </AppShell>
+      <main
+        className="flexibility-page"
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: spacing.xl,
+          background: colors.neutrals.white,
+          border: `1px solid ${colors.primary}`,
+          borderRadius: "6px",
+          textAlign: "center",
+          color: colors.primary,
+          fontFamily: fonts.body,
+          fontSize: fontSizes.sm,
+        }}
+      >
+        {error}
+      </main>
     )
   }
 
   return (
-    <AppShell currentPage="flexibility" scenario={null}>
+    <main
+      className="flexibility-page"
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        width: "100%",
+        padding: spacing.lg,
+        overflow: "hidden",
+      }}
+    >
       <header
         style={{
           marginBottom: spacing.xl,
@@ -125,35 +133,37 @@ export function FlexibilityPage() {
         />
       </header>
 
-      <PortfolioSnapshot
-        resourceCount={snapshot.resourceCount}
-        potentialKw={snapshot.potentialKw}
-        expectedKw={snapshot.expectedKw}
-        trustedKw={snapshot.trustedKw}
-      />
+      <div className="flexibility-page-layout">
+        <PortfolioSnapshot
+          resourceCount={snapshot.resourceCount}
+          potentialKw={snapshot.potentialKw}
+          expectedKw={snapshot.expectedKw}
+          trustedKw={snapshot.trustedKw}
+        />
 
-      <ResourceSearchFilters
-        search={search}
-        onSearchChange={setSearch}
-        typeFilter={typeFilter}
-        onTypeFilterChange={setTypeFilter}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        locationFilter={locationFilter}
-        onLocationFilterChange={setLocationFilter}
-      />
+        <ResourceSearchFilters
+          search={search}
+          onSearchChange={setSearch}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          locationFilter={locationFilter}
+          onLocationFilterChange={setLocationFilter}
+        />
 
-      <ResourcePortfolioTable
-        resources={filteredResources}
-        selectedId={selectedResourceId || undefined}
-        onRowSelect={(resource) => setSelectedResourceId(resource.id)}
-      />
+        <ResourcePortfolioTable
+          resources={filteredResources}
+          selectedId={selectedResourceId || undefined}
+          onRowSelect={(resource) => setSelectedResourceId(resource.id)}
+        />
+      </div>
 
       <ResourceDetailDrawer
         resource={selectedResource}
         onClose={() => setSelectedResourceId(null)}
       />
-    </AppShell>
+    </main>
   )
 }
 

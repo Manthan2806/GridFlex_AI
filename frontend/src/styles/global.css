@@ -433,3 +433,43 @@ button {
     gap: 0.25rem;
   }
 }
+
+/* Keyframe animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Flexibility Page */
+.flexibility-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.flexibility-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-mist);
+}
+
+.flexibility-page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+}
+
+/* Resource portfolio table responsive */
+.flexibility-page-layout .resource-portfolio-table {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .flexibility-page-layout {
+    gap: 1rem;
+  }
+}

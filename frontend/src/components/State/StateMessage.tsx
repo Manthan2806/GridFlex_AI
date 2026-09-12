@@ -192,14 +192,6 @@ export function StateMessage({
           {action.label}
         </button>
       ) : null}
-
-      <style jsx>{`
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   )
 }

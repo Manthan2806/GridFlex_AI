@@ -1,2 +1,1 @@
-export { MockOverviewAdapter } from "./overview"
-export { MockResourcesAdapter } from "./resources"
+export { MockDispatchAdapter } from "./dispatch"

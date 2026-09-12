@@ -1,8 +1,7 @@
-import { MetricDisplay } from "../Indicators/MetricDisplay"
-import { SectionHeader } from "../Layout/SectionHeader"
 import { colors } from "../../styles/tokens/colors"
 import { fonts, fontSizes, fontWeights } from "../../styles/tokens/typography"
 import { spacing } from "../../styles/tokens/spacing"
+import { radii } from "../../styles/tokens/radii"
 
 export interface PortfolioSnapshotProps {
   resourceCount: number
@@ -24,7 +23,7 @@ export function PortfolioSnapshot({
       className={className}
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
         gap: spacing.md,
         marginBottom: spacing.xl,
       }}
@@ -32,28 +31,30 @@ export function PortfolioSnapshot({
       <div
         style={{
           padding: `${spacing.md} ${spacing.lg}`,
-          background: colors.neutrals.white,
+          background: colors.neutrals.warmCream,
           border: `1px solid ${colors.neutrals.mist}`,
-          borderRadius: "6px",
+          borderRadius: radii.sm,
+          display: "flex",
+          flexDirection: "column",
+          gap: spacing.xs,
         }}
       >
         <span
           style={{
-            display: "block",
+            fontFamily: fonts.display,
             fontSize: fontSizes.xs,
             color: colors.neutrals.charcoal,
-            fontWeight: fontWeights.medium,
+            fontWeight: fontWeights.semibold,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            marginBottom: "4px",
           }}
         >
           Resources
         </span>
         <span
           style={{
-            fontFamily: fonts.body,
-            fontSize: fontSizes.xl,
+            fontFamily: fonts.display,
+            fontSize: fontSizes.xxl,
             fontWeight: fontWeights.semibold,
             color: colors.neutrals.ink,
           }}
@@ -61,9 +62,114 @@ export function PortfolioSnapshot({
           {resourceCount}
         </span>
       </div>
-      <MetricDisplay label="Potential" value={potentialKw} unit="kW" state="success" />
-      <MetricDisplay label="Expected" value={expectedKw} unit="kW" state="success" />
-      <MetricDisplay label="Trusted" value={trustedKw} unit="kW" state="success" />
+
+      <div
+        style={{
+          padding: `${spacing.md} ${spacing.lg}`,
+          background: colors.neutrals.warmCream,
+          border: `1px solid ${colors.neutrals.mist}`,
+          borderRadius: radii.sm,
+          display: "flex",
+          flexDirection: "column",
+          gap: spacing.xs,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: fonts.display,
+            fontSize: fontSizes.xs,
+            color: colors.neutrals.charcoal,
+            fontWeight: fontWeights.semibold,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Potential
+        </span>
+        <span
+          style={{
+            fontFamily: fonts.monospace,
+            fontSize: fontSizes.xxl,
+            fontWeight: fontWeights.semibold,
+            color: colors.neutrals.ink,
+          }}
+        >
+          {potentialKw}{" "}
+          <span style={{ fontSize: fontSizes.sm, color: colors.neutrals.grey }}>kW</span>
+        </span>
+      </div>
+
+      <div
+        style={{
+          padding: `${spacing.md} ${spacing.lg}`,
+          background: colors.neutrals.warmCream,
+          border: `1px solid ${colors.neutrals.mist}`,
+          borderRadius: radii.sm,
+          display: "flex",
+          flexDirection: "column",
+          gap: spacing.xs,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: fonts.display,
+            fontSize: fontSizes.xs,
+            color: colors.neutrals.charcoal,
+            fontWeight: fontWeights.semibold,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Expected
+        </span>
+        <span
+          style={{
+            fontFamily: fonts.monospace,
+            fontSize: fontSizes.xxl,
+            fontWeight: fontWeights.semibold,
+            color: colors.neutrals.ink,
+          }}
+        >
+          {expectedKw}{" "}
+          <span style={{ fontSize: fontSizes.sm, color: colors.neutrals.grey }}>kW</span>
+        </span>
+      </div>
+
+      <div
+        style={{
+          padding: `${spacing.md} ${spacing.lg}`,
+          background: colors.neutrals.warmCream,
+          border: `1px solid ${colors.neutrals.mist}`,
+          borderRadius: radii.sm,
+          display: "flex",
+          flexDirection: "column",
+          gap: spacing.xs,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: fonts.display,
+            fontSize: fontSizes.xs,
+            color: colors.neutrals.charcoal,
+            fontWeight: fontWeights.semibold,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Trusted
+        </span>
+        <span
+          style={{
+            fontFamily: fonts.monospace,
+            fontSize: fontSizes.xxl,
+            fontWeight: fontWeights.semibold,
+            color: colors.primary,
+          }}
+        >
+          {trustedKw}{" "}
+          <span style={{ fontSize: fontSizes.sm, color: colors.neutrals.grey }}>kW</span>
+        </span>
+      </div>
     </section>
   )
 }

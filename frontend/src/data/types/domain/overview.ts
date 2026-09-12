@@ -49,6 +49,18 @@ export interface RecentActivity {
   readonly timestamp: string
 }
 
+export interface SimulationResult {
+  readonly id: string
+  readonly status: "committed" | "partial" | "failed"
+  readonly actualFlexibilityKw: number
+  readonly renewableAbsorptionKwh: number
+  readonly constraintViolations: string[]
+  readonly deadlineViolations: string[]
+  readonly reboundKwh: number
+  readonly deliveryRatio: number
+  readonly timestamp: string
+}
+
 export interface OverviewData {
   readonly scenario: Scenario
   readonly simulationMode: boolean

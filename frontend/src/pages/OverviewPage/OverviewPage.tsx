@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react"
 import { useDataAdapter } from "../../app/providers/DataAdapterProvider"
 import { useSimulationMode } from "../../app/providers/SimulationContextProvider"
+import { CapacityBar } from "../../components/Visualization/CapacityBar"
 import { MetricDisplay } from "../../components/Indicators/MetricDisplay"
 import { PageHeader } from "../../components/Header/PageHeader"
 import { SectionHeader } from "../../components/Layout/SectionHeader"
 import { SimulationModeIndicator } from "../../components/Indicators/SimulationModeIndicator"
 import { StateMessage } from "../../components/State/StateMessage"
-import { OverviewData } from "../../data/types/domain"
-import { getOverviewData } from "../../data"
+import { Timeline } from "../../components/Visualization/Timeline"
+import { OpportunityVis } from "../../components/Visualization/OpportunityVis"
+import { colors } from "../../styles/tokens/colors"
+import { spacing } from "../../styles/tokens/spacing"
+import { radii } from "../../styles/tokens/radii"
+import type { OverviewData } from "../../data/types/domain"
 
 function OverviewPage() {
   const dataAdapter = useDataAdapter()
@@ -32,7 +37,9 @@ function OverviewPage() {
         }
       } else {
         try {
-          const result = await getOverviewData()
+          const result = await import("../../data/adapters/mock/overview").then(
+            (m) => new m.MockOverviewAdapter().getOverviewData()
+          )
           if (!cancelled) {
             setData(result)
             setState("success")
@@ -94,7 +101,7 @@ function OverviewPage() {
     renewableOpportunity,
     flexibilityState,
     nextDispatch,
-    recentActivity
+    recentActivity,
   } = data
 
   return (
@@ -107,9 +114,27 @@ function OverviewPage() {
       <section className="system-snapshot">
         <SectionHeader title="System Snapshot" />
         <div className="snapshot-metrics">
-          <MetricDisplay label="Renewable opportunity" value={systemSnapshot.renewableOpportunityKwh} unit="kWh" state="success" />
-          <MetricDisplay label="Trusted flexibility" value={systemSnapshot.trustedFlexibilityKw} unit="kW" state="success" />
-          <MetricDisplay label="Grid headroom" value={systemSnapshot.gridHeadroomKw} unit="kW" state="success" />
+          <CapacityBar
+            value={systemSnapshot.renewableOpportunityKwh}
+            max={1000}
+            label="Renewable opportunity"
+            unit="kWh"
+            intent="primary"
+          />
+          <CapacityBar
+            value={systemSnapshot.trustedFlexibilityKw}
+            max={500}
+            label="Trusted flexibility"
+            unit="kW"
+            intent="success"
+          />
+          <CapacityBar
+            value={systemSnapshot.gridHeadroomKw}
+            max={300}
+            label="Grid headroom"
+            unit="kW"
+            intent="subtle"
+          />
         </div>
       </section>
 
@@ -117,20 +142,39 @@ function OverviewPage() {
         <SectionHeader title="Renewable Opportunity" subtitle="Current / near‑term renewable availability window" />
         <div className="renewable-content">
           <div className="renewable-info">
-            <p className="timestamp">{renewableOpportunity.opportunityWindow}</p>
-            <p className="value">
-              {renewableOpportunity.renewableKwh} kWh
-              <span className="confidence">
-                Confidence: {Math.round(renewableOpportunity.confidence * 100)}%
-              </span>
-            </p>
-            <p className="description">{renewableOpportunity.description}</p>
+            <Timeline
+              title="Opportunity Window"
+              steps={[
+                { label: "Start", value: 25, unit: "kWh", time: "00:00", status: "active" },
+                { label: "Peak", value: 70, unit: "kWh", time: "06:00", status: "active" },
+                { label: "End", value: 100, unit: "kWh", time: "12:00", status: "pending" },
+              ]}
+            />
+            <div className="renewable-value">
+              <OpportunityVis
+                opportunity={{
+                  name: renewableOpportunity.opportunityWindow,
+                  valueKw: renewableOpportunity.renewableKwh,
+                  maxKw: 1000,
+                  active: true,
+                  constraints: ["Grid capacity", "Storage level"],
+                }}
+                onChange={() => {}}
+              />
+            </div>
           </div>
           <div className="renewable-visual">
-            <div className="visual-track">
-              <div className="visual-fill" style={{ width: `${renewableOpportunity.confidence * 100}%` }} />
-            </div>
-            <p className="visual-label">{renewableOpportunity.renewableKwh} kWh</p>
+            <CapacityBar
+              value={renewableOpportunity.renewableKwh}
+              max={1000}
+              label="Renewable availability"
+              unit="kWh"
+              intent="primary"
+              visualLabel={`${Math.round(renewableOpportunity.confidence * 100)}% confidence`}
+            />
+            <p className="visual-label" style={{ marginTop: spacing.xs }}>
+              {renewableOpportunity.renewableKwh} kWh
+            </p>
           </div>
         </div>
       </section>
@@ -138,29 +182,66 @@ function OverviewPage() {
       <section className="flexibility-state">
         <SectionHeader title="Flexibility State" subtitle="Potential vs expected vs trusted flexibility (tonal progression)" />
         <div className="flexibility-metrics">
-          <MetricDisplay label="Potential" value={flexibilityState.potentialKw} unit="kW" state="success" />
-          <MetricDisplay label="Expected" value={flexibilityState.expectedKw} unit="kW" state="success" />
-          <MetricDisplay label="Trusted" value={flexibilityState.trustedKw} unit="kW" state="success" />
+          <CapacityBar
+            value={flexibilityState.potentialKw}
+            max={flexibilityState.potentialKw + 200}
+            label="Potential"
+            unit="kW"
+            intent="subtle"
+          />
+          <CapacityBar
+            value={flexibilityState.expectedKw}
+            max={flexibilityState.potentialKw + 200}
+            label="Expected"
+            unit="kW"
+            intent="subtle"
+          />
+          <CapacityBar
+            value={flexibilityState.trustedKw}
+            max={flexibilityState.potentialKw + 200}
+            label="Trusted"
+            unit="kW"
+            intent="success"
+          />
         </div>
         <div className="flexibility-explanation">
           <div className="explanation-left">
             <p className="label">Potential flexibility</p>
-            <p className="detail">Theoretical maximum deliverable capacity (potential_kw)</p>
+            <p className="detail">Theoretical maximum deliverable capacity</p>
           </div>
           <div className="explanation-center">
             <p className="label">Expected flexibility</p>
-            <p className="detail">Evidence‑adjusted deliverable (expected_kw)</p>
+            <p className="detail">Evidence‑adjusted deliverable</p>
           </div>
           <div className="explanation-right">
             <p className="label">Trusted flexibility</p>
-            <p className="detail">Confidence‑weighted deliverable capacity (trusted_kw)</p>
+            <p className="detail">Confidence‑weighted deliverable capacity</p>
           </div>
           <div className="confidence-meter">
             <p className="label">Confidence level</p>
-            <div className="confidence-track">
-              <div className="confidence-fill" style={{ width: `${flexibilityState.confidence * 100}%` }} />
+            <div
+              style={{
+                width: "100%",
+                height: "8px",
+                background: colors.neutrals.lightGrey,
+                borderRadius: radii.sm,
+                overflow: "hidden",
+                marginTop: spacing.xs,
+              }}
+            >
+              <div
+                style={{
+                  width: `${flexibilityState.confidence * 100}%`,
+                  height: "100%",
+                  background: colors.primary,
+                  borderRadius: radii.sm,
+                  transition: "width 0.3s ease",
+                }}
+              />
             </div>
-            <p className="confidence-value">{Math.round(flexibilityState.confidence * 100)}%</p>
+            <p className="confidence-value" style={{ marginTop: spacing.xs }}>
+              {Math.round(flexibilityState.confidence * 100)}%
+            </p>
           </div>
         </div>
       </section>

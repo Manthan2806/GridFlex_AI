@@ -2,6 +2,7 @@ import { ReactNode, createContext, useContext } from "react"
 import { DataAdapter } from "../../data/adapters/types"
 import { MockOverviewAdapter } from "../../data/adapters/mock/overview"
 import { MockResourcesAdapter } from "../../data/adapters/mock/resources"
+import { MockDispatchAdapter } from "../../data/adapters/mock/dispatch"
 
 const isMockMode = import.meta.env.VITE_MOCK_MODE !== "false"
 
@@ -11,7 +12,13 @@ const mockDataAdapter: DataAdapter = {
   },
   getFlexibilityResources: () => {
     return Promise.resolve(new MockResourcesAdapter().getFlexibilityResources())
-  }
+  },
+  runSimulation: () => {
+    return Promise.resolve(new MockOverviewAdapter().runSimulation())
+  },
+  getDispatchData: () => {
+    return Promise.resolve(new MockDispatchAdapter().getDispatchData())
+  },
 }
 
 export interface DataAdapterContextType {
