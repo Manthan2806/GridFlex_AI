@@ -66,6 +66,16 @@ def initialize_database() -> None:
 
 
 @app.post("/simulate")
+def simulate_full():
+    import os, sys
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    from backend.app.services.integrated_simulation import run_integrated_simulation
+    result = run_integrated_simulation()
+    return result
+
 def simulate() -> dict:
     with SessionLocal() as session:
         ev_resources = list(session.scalars(select(EVResource).order_by(EVResource.id)))
@@ -167,3 +177,11 @@ def get_run(run_id: str) -> dict:
             "total_delivered_kw": rounded(run.total_delivered_kw),
             "results": json.loads(run.results_json),
         }
+
+
+@app.post("/simulate/full")
+def simulate_full():
+    from backend.app.services.integrated_simulation import run_integrated_simulation
+
+    result = run_integrated_simulation()
+    return result
