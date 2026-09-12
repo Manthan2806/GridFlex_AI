@@ -17,7 +17,7 @@
     "delivered_flexibility_error": 0.0,
     "overcommitment": 0.0,
     "constraint_violation_count": 0,
-    "deadline_violation_count": 5,
+    "deadline_violation_count": 4,
     "reliability": 1.0,
     "renewable_absorption": null,
     "rebound": null,
@@ -25,7 +25,6 @@
       "Resource ev-001 missed required 4.0 kWh (delivered 0.0 kWh)",
       "Resource ev-002 missed required 6.0 kWh (delivered 0.0 kWh)",
       "Resource ev-003 missed required 8.0 kWh (delivered 0.0 kWh)",
-      "Resource ev-004 missed required 2.0 kWh (delivered 0.0 kWh)",
       "Resource ev-005 missed required 10.0 kWh (delivered 0.0 kWh)"
     ]
   }

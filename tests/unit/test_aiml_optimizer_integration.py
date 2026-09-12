@@ -286,3 +286,67 @@ def test_deterministic_replay():
         assert i1.resource_id == i2.resource_id
         assert i1.power_kw == i2.power_kw
         assert i1.time_step == i2.time_step
+
+# ──────────────────────────────────────────────
+# 5. Advanced Optimization Constraint Tests
+# ──────────────────────────────────────────────
+
+def test_one_infeasible_ev_does_not_delete_feasible_schedules():
+    """If one resource is infeasible, others should still get scheduled."""
+    res_good = _make_resource("ev-good", max_power=7.2, required_kwh=3.0)
+    res_bad = _make_resource("ev-bad", max_power=1.0, required_kwh=10.0) # impossible
+    scenario = Scenario(scenario_id="scen-mix", resources=[res_good, res_bad], disruption_specs={}, seeds={})
+    optimizer = MVPOptimizer()
+    
+    plan = optimizer.generate_dispatch_plan(scenario, "potential_kw", {})
+    
+    assert plan.status == OptimizationStatus.INFEASIBLE
+    assert "ev-bad" in plan.infeasibility_report
+    # Good resource is still scheduled
+    assert len(plan.dispatch_plan) > 0
+    assert any(inst.resource_id == "ev-good" for inst in plan.dispatch_plan)
+    assert not any(inst.resource_id == "ev-bad" for inst in plan.dispatch_plan)
+
+def test_trusted_kw_below_min_power():
+    """If trusted_kw is below min_power, the resource is marked infeasible and no schedule is generated."""
+    res = _make_resource("ev-low", max_power=7.2, required_kwh=3.0)
+    res.min_power = 2.0
+    scenario = Scenario(scenario_id="scen-low", resources=[res], disruption_specs={}, seeds={})
+    
+    # Mock trust_data with trusted_kw < min_power
+    ctx = {"trust_data": {res.id: TrustState(potential_kw=7.2, expected_kw=2.0, trusted_kw=1.5, confidence=0.75)}}
+    
+    optimizer = MVPOptimizer()
+    plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
+    
+    assert plan.status == OptimizationStatus.INFEASIBLE
+    assert "min_power" in plan.infeasibility_report
+    assert len(plan.dispatch_plan) == 0
+
+def test_final_partial_interval_handling():
+    """If remaining_kwh requires a dispatch below min_power, it should dispatch at least min_power."""
+    # min_power=4.0. Need 1.0 kwh. A full 15m step at 4.0kw gives exactly 1.0 kwh. Let's say we need 0.5 kwh.
+    res = _make_resource("ev-partial", max_power=7.2, required_kwh=0.5)
+    res.min_power = 4.0
+    scenario = Scenario(scenario_id="scen-partial", resources=[res], disruption_specs={}, seeds={})
+    
+    ctx = {"trust_data": {res.id: TrustState(potential_kw=7.2, expected_kw=5.0, trusted_kw=5.0, confidence=1.0)}}
+    optimizer = MVPOptimizer()
+    plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
+    
+    assert plan.status == OptimizationStatus.FEASIBLE
+    assert len(plan.dispatch_plan) == 1
+    assert plan.dispatch_plan[0].power_kw == 4.0 # remaining 0.5kwh requires 2kw for 15m, but min_power is 4kw
+
+def test_dispatch_never_exceeds_trusted_kw():
+    """Trust-aware dispatch must strictly respect the trusted_kw upper bound."""
+    res = _make_resource("ev-bound", max_power=7.2, required_kwh=3.0)
+    res.min_power = 1.0
+    scenario = Scenario(scenario_id="scen-bound", resources=[res], disruption_specs={}, seeds={})
+    
+    ctx = {"trust_data": {res.id: TrustState(potential_kw=7.2, expected_kw=4.0, trusted_kw=3.0, confidence=0.75)}}
+    optimizer = MVPOptimizer()
+    plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
+    
+    for inst in plan.dispatch_plan:
+        assert inst.power_kw <= 3.0

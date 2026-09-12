@@ -37,9 +37,43 @@ class SimulationVerifier:
         
         # 1. Pre-process disjoint datasets for O(1) alignment
         dispatched: Dict[str, Dict[TimeStep, float]] = {}
+        
+        violations = []
+        constraint_violations = 0
+        deadline_violations = 0
+        
+        # Build resource map for quick lookup
+        resource_map = {r.id: r for r in sim_input.scenario.resources}
+        
         for inst in sim_input.dispatch_plan.dispatch_plan:
+            res = resource_map.get(inst.resource_id)
+            if not res:
+                constraint_violations += 1
+                violations.append(f"Unknown resource {inst.resource_id} in dispatch plan")
+                continue
+                
+            if inst.power_kw < 0:
+                constraint_violations += 1
+                violations.append(f"Negative power {inst.power_kw} for {inst.resource_id}")
+                
+            from datetime import datetime
+            if isinstance(inst.time_step, datetime):
+                if inst.time_step.minute % 15 != 0 or inst.time_step.second != 0 or inst.time_step.microsecond != 0:
+                    constraint_violations += 1
+                    violations.append(f"Non-15-minute timestamp {inst.time_step} for {inst.resource_id}")
+                
+                if isinstance(res.earliest_start, datetime) and isinstance(res.latest_end, datetime):
+                    if inst.time_step < res.earliest_start or inst.time_step >= res.latest_end:
+                        constraint_violations += 1
+                        violations.append(f"Instruction for {inst.resource_id} outside time window: {inst.time_step}")
+                
             if inst.resource_id not in dispatched:
                 dispatched[inst.resource_id] = {}
+                
+            if inst.time_step in dispatched[inst.resource_id]:
+                constraint_violations += 1
+                violations.append(f"Duplicate instruction for {inst.resource_id} at {inst.time_step}")
+                
             dispatched[inst.resource_id][inst.time_step] = inst.power_kw
             
         actuals: Dict[str, Dict[TimeStep, float]] = {}
@@ -59,9 +93,6 @@ class SimulationVerifier:
             absorption = calculate_renewable_absorption(sim_output.actual_response, renewable_excess_series)
             
         # 3. Analyze constraints and deadlines per resource
-        violations = []
-        constraint_violations = 0
-        deadline_violations = 0
         
         for res in sim_input.scenario.resources:
             res_actuals = actuals.get(res.id, {})

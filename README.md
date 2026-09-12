@@ -179,7 +179,7 @@ python scripts/run_mvp_experiment.py
 This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
 
 ### 5. Demo Mode / Experimental Model Limitation
-The current EV flexibility prediction model (`RandomForestRegressor`) is marked as **experimental_not_deployable** and did not pass deployment gates. 
+Ashwin's EV Candidate v2 model is integrated for offline demonstration purposes only. It is currently marked as **experimental_not_deployable** and has not been approved for real-world deployment.
 - It MUST be instantiated with `ExperimentalEVModelClient(demo_mode=True)`.
 - It cannot be used in a live production environment without generating an explicit `EVModelIntegrationError`.
 
