@@ -1,0 +1,124 @@
+{
+  "calibration_version": "ev_random_forest_safety_v1",
+  "scope": "Validation-calibrated safety margin on hybrid/synthetic EV behaviour.",
+  "definitions": {
+    "expected_ratio": "Raw tuned Random Forest delivery-ratio prediction.",
+    "trusted_ratio": "Expected ratio minus its dispatch-group safety margin, clipped to 0..1.",
+    "expected_kw": "dispatch_kw multiplied by expected_ratio.",
+    "trusted_kw": "dispatch_kw multiplied by trusted_ratio."
+  },
+  "coverage_target": 0.9,
+  "calibration_split": "validation",
+  "calibration_and_measurement_share_same_split": true,
+  "dispatch_thresholds": {
+    "source_split": "train",
+    "small_max_kw": 2.746667,
+    "medium_max_kw": 4.871
+  },
+  "dispatch_group_safety": {
+    "small": {
+      "row_count": 1176,
+      "safety_margin_ratio": 0.366888,
+      "overprediction_rate_percent": 9.94898,
+      "target_max_overprediction_rate_percent": 10.0,
+      "passes_risk_limit": true
+    },
+    "medium": {
+      "row_count": 999,
+      "safety_margin_ratio": 0.30563,
+      "overprediction_rate_percent": 9.90991,
+      "target_max_overprediction_rate_percent": 10.0,
+      "passes_risk_limit": true
+    },
+    "large": {
+      "row_count": 975,
+      "safety_margin_ratio": 0.473584,
+      "overprediction_rate_percent": 9.948718,
+      "target_max_overprediction_rate_percent": 10.0,
+      "passes_risk_limit": true
+    }
+  },
+  "validation": {
+    "row_count": 3150,
+    "expected_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.154332,
+      "rmse_ratio": 0.218952,
+      "bias_ratio": 0.001128,
+      "mean_overestimation_ratio": 0.07773,
+      "mae_kw": 0.703521,
+      "rmse_kw": 1.447476,
+      "bias_kw": 0.039748,
+      "mean_overestimation_kw": 0.371634,
+      "prediction_bound_violations": 0
+    },
+    "trusted_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.411725,
+      "rmse_ratio": 0.441111,
+      "bias_ratio": -0.3791,
+      "mean_overestimation_ratio": 0.016312,
+      "mae_kw": 1.835874,
+      "rmse_kw": 2.615525,
+      "bias_kw": -1.68092,
+      "mean_overestimation_kw": 0.077477,
+      "prediction_bound_violations": 0
+    },
+    "trusted_overprediction_rate_percent": 9.936508,
+    "average_safety_reduction_ratio": 0.380228,
+    "average_safety_reduction_kw": 1.720668,
+    "mean_expected_ratio": 0.568493,
+    "mean_trusted_ratio": 0.188265,
+    "mean_expected_kw": 2.510228,
+    "mean_trusted_kw": 0.78956,
+    "trusted_kw_retained_percent_of_expected": 31.45373
+  },
+  "acceptance_checks": {
+    "expected_mae_ratio_beats_baseline": true,
+    "expected_mae_kw_beats_baseline": true,
+    "expected_predictions_within_zero_and_one": true,
+    "trusted_predictions_never_exceed_expected": true,
+    "all_dispatch_groups_pass_risk_limit": true,
+    "overall_passes_risk_limit": true,
+    "test_targets_remain_sealed": true
+  },
+  "risk_rule_passed": true,
+  "provisional_acceptance": false,
+  "decision_status": "risk_target_met_but_usefulness_review_required",
+  "decision_reason": "The 90% per-session rule is technically satisfied, but it removes a large share of expected kW. A portfolio-level safety rule or a chosen business trade-off is required before final test evaluation.",
+  "test_holdout": {
+    "row_count": 3150,
+    "targets_read": false,
+    "status": "sealed"
+  },
+  "limitations": [
+    "Safety margins were calibrated and measured on the same validation split.",
+    "Coverage must be checked once on the untouched test split before final acceptance.",
+    "Results describe hybrid/synthetic EV behaviour, not real Ahmedabad reliability."
+  ],
+  "selected_model": {
+    "name": "shallower",
+    "parameters": {
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt",
+      "random_state": 2806,
+      "n_jobs": 1
+    }
+  },
+  "inputs": {
+    "training_table": {
+      "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+      "sha256": "ad722fed3c80feea2fc6846bf2c185667f30f81a7a776a70f5de6ea5bf9e4e65"
+    },
+    "baseline_report": {
+      "path": "data\\processed\\ev_training\\ev_baseline_evaluation.json",
+      "sha256": "10e0e1fb9a242bf06857558a5d9d8a214e52f4013bd50423f3b4abbcb943869d"
+    },
+    "tuning_report": {
+      "path": "data\\processed\\ev_training\\ev_random_forest_tuning.json",
+      "sha256": "bb4d15217df8c39737416ede8e9cae3b5247496da262ed1fdfc7f4ec645ef1de"
+    }
+  }
+}

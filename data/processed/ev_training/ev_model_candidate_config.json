@@ -1,0 +1,108 @@
+{
+  "candidate_version": "ev_model_candidate_v1",
+  "status": "locked_before_final_holdout_evaluation",
+  "model": {
+    "family": "RandomForestRegressor",
+    "selected_name": "shallower",
+    "parameters": {
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt",
+      "random_state": 2806,
+      "n_jobs": 1
+    },
+    "fit_split": "train"
+  },
+  "feature_contract": {
+    "names_in_order": [
+      "rated_power_kw",
+      "max_power_kw",
+      "required_kwh",
+      "battery_capacity_kwh",
+      "arrival_soc_pct",
+      "target_soc_pct",
+      "soc_gap_pct",
+      "connection_window_hours",
+      "required_energy_share",
+      "average_required_power_kw",
+      "event_hour",
+      "event_weekday",
+      "prior_event_count",
+      "prior_delivery_ratio_mean",
+      "prior_delivery_ratio_ema",
+      "prior_delivery_ratio_std",
+      "prior_availability_rate",
+      "prior_override_rate"
+    ],
+    "imputation_medians": {
+      "rated_power_kw": 6.37,
+      "max_power_kw": 6.37,
+      "required_kwh": 7.5625,
+      "battery_capacity_kwh": 68.445,
+      "arrival_soc_pct": 40.918499999999995,
+      "target_soc_pct": 61.9755,
+      "soc_gap_pct": 12.196000000000002,
+      "connection_window_hours": 4.25,
+      "required_energy_share": 0.47309100000000004,
+      "average_required_power_kw": 2.2822115,
+      "event_hour": 13.75,
+      "event_weekday": 3.0,
+      "prior_event_count": 14.5,
+      "prior_delivery_ratio_mean": 0.5265675,
+      "prior_delivery_ratio_ema": 0.5433269999999999,
+      "prior_delivery_ratio_std": 0.187765,
+      "prior_availability_rate": 0.952381,
+      "prior_override_rate": 0.083333
+    },
+    "features_allowed_to_be_missing": [
+      "prior_availability_rate",
+      "prior_delivery_ratio_ema",
+      "prior_delivery_ratio_mean",
+      "prior_delivery_ratio_std",
+      "prior_override_rate"
+    ]
+  },
+  "safety_policy": {
+    "coverage_target": 0.85,
+    "maximum_allowed_overprediction_rate_percent": 15.0,
+    "dispatch_group_thresholds_kw": {
+      "small_max": 2.746666666666666,
+      "medium_max": 4.871
+    },
+    "margin_ratio_by_dispatch_group": {
+      "small": 0.194635,
+      "medium": 0.153009,
+      "large": 0.297025
+    },
+    "validation_trusted_kw_retained_percent": 59.653631,
+    "minimum_required_retention_percent": 50.0
+  },
+  "output_contract": {
+    "expected_ratio": "raw model prediction clipped to 0..1",
+    "trusted_ratio": "expected ratio minus the selected safety margin, clipped to 0..1",
+    "expected_kw": "requested dispatch kW multiplied by expected ratio",
+    "trusted_kw": "requested dispatch kW multiplied by trusted ratio"
+  },
+  "test_holdout": {
+    "row_count": 3150,
+    "targets_read": false,
+    "status": "sealed"
+  },
+  "model_artifact_saved": false,
+  "next_gate": "one-time evaluation on the untouched test split",
+  "inputs": {
+    "training_table": {
+      "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+      "sha256": "aa410fd84cea451676503a3ee3079f756951f023dad612bd2f1c6b502a7c37d6"
+    },
+    "tuning_report": {
+      "path": "data\\processed\\ev_training\\ev_random_forest_tuning.json",
+      "sha256": "f409e0edd9af22f42ffd87ec01dc41ec74d9c324c888020bd7e2125075e64523"
+    },
+    "safety_tradeoff_report": {
+      "path": "data\\processed\\ev_training\\ev_random_forest_safety_tradeoff.json",
+      "sha256": "e2b801dc5dcbec1a5ec931641644a03a900d89aacbadf3ff95b38bfc1091fc92"
+    }
+  }
+}

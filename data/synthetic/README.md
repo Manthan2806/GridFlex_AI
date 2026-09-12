@@ -8,7 +8,7 @@ They are not measurements from real people, vehicles, utilities, or locations.
 Run from the repository root:
 
 ```text
-python -m ai_ml.generate_hybrid_ev_data --output-root data/synthetic
+python -m ai_ml.EV_model.generate_hybrid_ev_data --output-root data/synthetic
 ```
 
 The generator creates:
