@@ -1,0 +1,168 @@
+{
+  "candidate_version": "water_heater_candidate_v1",
+  "status": "locked_for_final_holdout",
+  "deployment_allowed": false,
+  "feature_contract": {
+    "names_in_order": [
+      "heater_type_heat_pump",
+      "rated_power_kw",
+      "tank_capacity_l",
+      "minimum_comfort_temp_c",
+      "maximum_temp_c",
+      "temperature_band_c",
+      "recovery_rate_c_per_hour",
+      "baseline_duty_cycle",
+      "event_hour",
+      "event_weekday",
+      "flex_direction_reduce",
+      "pre_dispatch_temp_c",
+      "pre_dispatch_power_kw",
+      "directional_temperature_margin_c",
+      "directional_temperature_margin_fraction",
+      "potential_kw",
+      "prior_event_count",
+      "prior_response_ratio_mean",
+      "prior_response_ratio_ema",
+      "prior_response_ratio_std",
+      "prior_delivered_kw_mean",
+      "prior_availability_rate",
+      "prior_override_rate"
+    ],
+    "imputation_medians": {
+      "heater_type_heat_pump": 1.0,
+      "rated_power_kw": 4.478517,
+      "tank_capacity_l": 223.342,
+      "minimum_comfort_temp_c": 49.5295,
+      "maximum_temp_c": 58.918,
+      "temperature_band_c": 9.4435,
+      "recovery_rate_c_per_hour": 6.4155,
+      "baseline_duty_cycle": 0.25277,
+      "event_hour": 18.0,
+      "event_weekday": 3.0,
+      "flex_direction_reduce": 1.0,
+      "pre_dispatch_temp_c": 53.989,
+      "pre_dispatch_power_kw": 3.187621,
+      "directional_temperature_margin_c": 4.528,
+      "directional_temperature_margin_fraction": 0.489059,
+      "potential_kw": 3.598855,
+      "prior_event_count": 14.5,
+      "prior_response_ratio_mean": 0.421815,
+      "prior_response_ratio_ema": 0.4144715,
+      "prior_response_ratio_std": 0.370744,
+      "prior_delivered_kw_mean": 1.4977265,
+      "prior_availability_rate": 0.666667,
+      "prior_override_rate": 0.333333
+    },
+    "features_allowed_to_be_missing": [
+      "prior_event_count",
+      "prior_response_ratio_mean",
+      "prior_response_ratio_ema",
+      "prior_response_ratio_std",
+      "prior_delivered_kw_mean",
+      "prior_availability_rate",
+      "prior_override_rate"
+    ]
+  },
+  "expected_model": {
+    "family": "HistGradientBoostingRegressor",
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "random_state": 2901
+    }
+  },
+  "safety_policy": {
+    "method": "validation-selected lower conditional quantile",
+    "lower_quantile": 0.1,
+    "lower_model_parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "random_state": 2901,
+      "loss": "quantile",
+      "quantile": 0.1
+    },
+    "maximum_allowed_overprediction_rate_percent": 15.0,
+    "potential_group_thresholds_kw": {
+      "small_max": 3.27024,
+      "medium_max": 3.886731
+    },
+    "validation_groups": {
+      "all": {
+        "row_count": 3150,
+        "overprediction_rate_percent": 10.15873,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "heat_pump": {
+        "row_count": 2160,
+        "overprediction_rate_percent": 10.231481,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "electric_resistance": {
+        "row_count": 990,
+        "overprediction_rate_percent": 10.0,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "reduce": {
+        "row_count": 2444,
+        "overprediction_rate_percent": 9.9018,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "increase": {
+        "row_count": 706,
+        "overprediction_rate_percent": 11.048159,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "small": {
+        "row_count": 1063,
+        "overprediction_rate_percent": 10.630292,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "medium": {
+        "row_count": 1064,
+        "overprediction_rate_percent": 10.996241,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "large": {
+        "row_count": 1023,
+        "overprediction_rate_percent": 8.797654,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      }
+    },
+    "validation_trusted_kw_retained_percent": 5.23231,
+    "retention_is_acceptance_gate": false
+  },
+  "locking_checks": {
+    "all_validation_groups_pass": true,
+    "trusted_never_exceeds_expected": true,
+    "trusted_power_is_nonzero": true,
+    "test_outcomes_remained_unread": true
+  },
+  "test_holdout": {
+    "status": "sealed",
+    "target_columns_read": false
+  },
+  "evidence": {
+    "training_table_canonical_sha256": "8e540e4732a4723d12bf3ba936aceaa4aac0c7966f0f10d2c33b5afaf1015e2e",
+    "development_report_canonical_sha256": "21061883e5cb35193fa1918ea37c5c5fb403c61bf93d989db0a6bd7299d0ef46",
+    "baseline_report_canonical_sha256": "1ee319f2222965d7c9e9d2cde1b05535611fce26ea4501b2adf3ebcbff217e84"
+  },
+  "limitations": [
+    "All water-heater outcomes are synthetic, so this supports a hackathon prototype only.",
+    "The conservative estimate retains little power; retention is reported, not hidden.",
+    "No final test outcome was used to select this policy."
+  ]
+}
