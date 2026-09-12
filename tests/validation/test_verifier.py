@@ -16,7 +16,7 @@ from experiments.metrics import (
     calculate_reliability,
     calculate_rebound
 )
-from tests.validation.verifier import SimulationVerifier
+from backend.app.services.verification_service import SimulationVerifier
 
 # --- Metrics Unit Tests ---
 

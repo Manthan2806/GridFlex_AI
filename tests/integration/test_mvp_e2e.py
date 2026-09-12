@@ -8,7 +8,7 @@ from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
 from backend.app.services.trust_hydration import build_optimizer_context
 from backend.app.services.dispatch_service import MVPOptimizer
 from simulation.adapter import SimulationAdapter
-from tests.validation.verifier import SimulationVerifier
+from backend.app.services.verification_service import SimulationVerifier
 from experiments.runner import ExperimentRunner
 
 def _make_resource(res_id: str, max_power: float = 7.2, required_kwh: float = 4.0) -> FlexibilityResource:

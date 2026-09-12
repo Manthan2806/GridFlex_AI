@@ -7,7 +7,7 @@ from backend.app.schemas.scenarios import Scenario
 from backend.app.schemas.dispatch import DispatchPlan
 from backend.app.schemas.core import TimeStep
 
-from tests.validation.verifier import SimulationVerifier, VerificationResult
+from backend.app.services.verification_service import SimulationVerifier, VerificationResult
 from simulation.adapter import SimulationAdapter
 
 class StrategyBoundary(Protocol):
@@ -18,13 +18,17 @@ class StrategyBoundary(Protocol):
     def generate_dispatch_plan(self, scenario: Scenario, strategy_basis: str, context: Dict[str, Any]) -> DispatchPlan:
         ...
 
+from backend.app.domain.enums import OptimizationStatus
+
 class ExperimentComparison(BaseModel):
     """
     Result of a paired Baseline vs Trust-Aware experiment execution.
     Raw results are exposed directly for comparison.
     """
     baseline_result: Optional[VerificationResult] = None
+    baseline_plan_status: Optional[OptimizationStatus] = None
     trust_aware_result: Optional[VerificationResult] = None
+    trust_aware_plan_status: Optional[OptimizationStatus] = None
     horizon_validated: bool
     experiment_seed: int
     scenario_id: str
@@ -90,7 +94,6 @@ class ExperimentRunner:
         )
         
         # --- 2. Trust-Aware Run (trusted_kw) ---
-        trust_verification = None
         try:
             trust_plan = self.strategy.generate_dispatch_plan(scenario, "trusted_kw", ctx)
             trust_sim_input = SimulationInput(
@@ -107,13 +110,14 @@ class ExperimentRunner:
                 tolerance_kw=tolerance_kw,
                 renewable_excess_series=renewable_excess_series
             )
-        except (NotImplementedError, ValueError, KeyError):
-            # Safe fallback if AI/ML trust models are not fully integrated or trusted_kw is missing from dataset
-            pass
+        except Exception as e:
+            raise RuntimeError(f"Trust-aware experiment failed: {e}") from e
 
         return ExperimentComparison(
             baseline_result=baseline_verification,
+            baseline_plan_status=baseline_plan.status,
             trust_aware_result=trust_verification,
+            trust_aware_plan_status=trust_plan.status,
             horizon_validated=True,
             experiment_seed=master_seed,
             scenario_id=scenario.scenario_id

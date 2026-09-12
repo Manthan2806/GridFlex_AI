@@ -13,7 +13,7 @@ from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
 from backend.app.services.trust_hydration import build_optimizer_context
 from backend.app.services.dispatch_service import MVPOptimizer
 from simulation.adapter import SimulationAdapter
-from tests.validation.verifier import SimulationVerifier
+from backend.app.services.verification_service import SimulationVerifier
 from experiments.runner import ExperimentRunner
 
 def _make_resource(res_id: str, max_power: float = 7.2, required_kwh: float = 4.0) -> FlexibilityResource:
@@ -104,11 +104,13 @@ def main():
     
     print("\n--- 2. BASELINE DISPATCH SUMMARY ---")
     print(f"Strategy Basis: potential_kw")
+    print(f"Optimizer Status: {comparison.baseline_plan_status.name if comparison.baseline_plan_status else 'UNKNOWN'}")
     print(f"Passed Verification: {base_res.passed}")
     print(f"Violations: {len(base_res.violations)}")
     
     print("\n--- 3. TRUST-AWARE DISPATCH SUMMARY ---")
     print(f"Strategy Basis: trusted_kw")
+    print(f"Optimizer Status: {comparison.trust_aware_plan_status.name if comparison.trust_aware_plan_status else 'UNKNOWN'}")
     print(f"Passed Verification: {trust_res.passed}")
     print(f"Violations: {len(trust_res.violations)}")
     
@@ -128,8 +130,13 @@ def main():
     print("while the baseline satisfies all deadlines.")
     print("Global feeder/system safety cannot be evaluated because the canonical")
     print("Scenario does not currently expose a system capacity constraint.")
-    print("\nThe experiment demonstrates the tradeoff between conservative trust-aware")
-    print("dispatch and deadline satisfaction; it does not yet quantify feeder-level safety.")
+    print("\nFurthermore, the current Phase 1 SimulationEngine is deterministic and always")
+    print("delivers dispatched power perfectly. It does not yet implement stochastic")
+    print("override/availability disruptions, which means the baseline's potential")
+    print("overcommitments are not physically materialized in this experiment.")
+    print("\nThe experiment successfully demonstrates the tradeoff between conservative")
+    print("trust-aware dispatch and deadline satisfaction; it does not yet quantify")
+    print("feeder-level safety or real-world overcommitment penalty.")
     print("==================================================")
     
     # Write JSON output

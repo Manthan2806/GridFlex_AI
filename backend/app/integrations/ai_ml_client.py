@@ -39,9 +39,14 @@ class ExperimentalEVPrediction:
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
+    if path.suffix in (".csv", ".json"):
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                digest.update(line.replace("\r\n", "\n").encode("utf-8"))
+    else:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
     return digest.hexdigest()
 
 
@@ -58,7 +63,12 @@ def _trust_state_from_output(output: Mapping[str, float]) -> TrustState:
     expected_kw = float(output["expected_kw"])
     trusted_kw = float(output["trusted_kw"])
     potential_kw = float(output["requested_dispatch_kw"])
-    confidence = float(output.get("safety_coverage", 0.0))
+    
+    if expected_kw == 0.0:
+        confidence = 0.0
+    else:
+        confidence = trusted_kw / expected_kw
+        
     return TrustState(
         potential_kw=potential_kw,
         expected_kw=expected_kw,

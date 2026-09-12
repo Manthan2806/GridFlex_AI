@@ -146,6 +146,43 @@ This README is a navigation document, not a source of truth. It does not own pro
 
 For the current project status, success criteria, MVP scope, non-goals, and future possibilities, see PROJECT.md.
 
+## Getting Started
+
+### 1. Environment Setup
+The project uses a standard Python virtual environment.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Dependency Installation
+Install the necessary runtime dependencies:
+```bash
+pip install -r requirements.txt
+```
+For development and testing, also install:
+```bash
+pip install -r requirements-dev.txt
+```
+
+### 3. Running Tests
+The test suite ensures the integrity of the data pipeline, model integration, and optimization engine.
+```bash
+python -m pytest -q
+```
+
+### 4. Running the MVP Experiment
+To run the end-to-end experiment demonstrating the tradeoff between baseline (potential_kw) and trust-aware (trusted_kw) dispatch:
+```bash
+python scripts/run_mvp_experiment.py
+```
+This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
+
+### 5. Demo Mode / Experimental Model Limitation
+The current EV flexibility prediction model (`RandomForestRegressor`) is marked as **experimental_not_deployable** and did not pass deployment gates. 
+- It MUST be instantiated with `ExperimentalEVModelClient(demo_mode=True)`.
+- It cannot be used in a live production environment without generating an explicit `EVModelIntegrationError`.
+
 ## Status
 
 DRAFT

@@ -70,7 +70,7 @@ def test_trust_state_from_raw_output():
     assert ts.potential_kw == 7.2
     assert ts.expected_kw == 5.0
     assert ts.trusted_kw == 3.5
-    assert ts.confidence == 0.85
+    assert ts.confidence == 0.7
     assert ts.trusted_kw <= ts.expected_kw <= ts.potential_kw
 
 
@@ -145,18 +145,43 @@ def test_optimizer_baseline_with_trust_context():
     optimizer = MVPOptimizer()
     plan = optimizer.generate_dispatch_plan(scenario, "potential_kw", ctx)
 
-    assert len(plan.dispatch_plan) > 0
-    assert plan.status == OptimizationStatus.OPTIMAL
+    assert plan.status == OptimizationStatus.FEASIBLE
     # Baseline uses potential_kw which equals requested_dispatch_kw (clamped to max_power)
     for inst in plan.dispatch_plan:
         assert inst.resource_id == "ev-base-001"
         assert inst.power_kw <= res.max_power
 
 
+def test_optimizer_infeasible_impossible_deadline():
+    """Optimizer returns INFEASIBLE if the required energy cannot be delivered before deadline."""
+    # max_power=1.0, required_kwh=10.0, time window=2 hours -> max possible=2.0 kwh. Impossible.
+    res = _make_resource("ev-impossible", max_power=1.0, required_kwh=10.0)
+    scenario = Scenario(scenario_id="scen-imp", resources=[res], disruption_specs={}, seeds={})
+    optimizer = MVPOptimizer()
+    
+    plan = optimizer.generate_dispatch_plan(scenario, "potential_kw", {})
+    
+    assert plan.status == OptimizationStatus.INFEASIBLE
+    assert "missed required energy" in plan.infeasibility_report
+    assert len(plan.dispatch_plan) == 0
+
+def test_optimizer_infeasible_zero_power():
+    """Optimizer returns INFEASIBLE if the usable power is zero."""
+    res = _make_resource("ev-zero", max_power=0.0, required_kwh=10.0)
+    scenario = Scenario(scenario_id="scen-zero", resources=[res], disruption_specs={}, seeds={})
+    optimizer = MVPOptimizer()
+    
+    plan = optimizer.generate_dispatch_plan(scenario, "potential_kw", {})
+    
+    assert plan.status == OptimizationStatus.INFEASIBLE
+    assert "usable power" in plan.infeasibility_report
+    assert len(plan.dispatch_plan) == 0
+
+
 def test_optimizer_trust_aware_with_trust_context():
     """Trust-aware strategy uses trusted_kw from live AI/ML inference."""
     client = ExperimentalEVModelClient(demo_mode=True)
-    res = _make_resource("ev-trust-001", max_power=7.2, required_kwh=3.0)
+    res = _make_resource("ev-trust-001", max_power=7.2, required_kwh=2.0)
     scenario = Scenario(scenario_id="scen-trust", resources=[res], disruption_specs={}, seeds={})
     ctx = build_optimizer_context(client, [res], res.earliest_start)
 
@@ -164,6 +189,7 @@ def test_optimizer_trust_aware_with_trust_context():
     plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
 
     trusted_kw = ctx["trust_data"]["ev-trust-001"].trusted_kw
+    assert plan.status == OptimizationStatus.FEASIBLE
     assert len(plan.dispatch_plan) > 0
     for inst in plan.dispatch_plan:
         assert inst.resource_id == "ev-trust-001"

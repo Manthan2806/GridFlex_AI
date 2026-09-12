@@ -8,7 +8,7 @@ from backend.app.domain.models import FlexibilityResource
 from backend.app.domain.enums import ResourceType, OptimizationStatus
 
 from simulation.adapter import SimulationAdapter
-from tests.validation.verifier import SimulationVerifier
+from backend.app.services.verification_service import SimulationVerifier
 from experiments.runner import ExperimentRunner, StrategyBoundary
 
 class DummyStrategy(StrategyBoundary):
@@ -89,13 +89,11 @@ def test_runner_handles_missing_trusted_kw():
         adapter=SimulationAdapter()
     )
     
-    result = runner.run_paired_experiment(
-        scenario=create_valid_scenario(),
-        renewable_demand_forecasts=[]
-    )
-    
-    assert result.baseline_result is not None
-    assert result.trust_aware_result is None # Gracefully handled missing AI/ML data
+    with pytest.raises(RuntimeError, match="Trust-aware experiment failed"):
+        runner.run_paired_experiment(
+            scenario=create_valid_scenario(),
+            renewable_demand_forecasts=[]
+        ) # Gracefully handled missing AI/ML data
 
 def test_runner_invalid_horizon_rejected():
     runner = ExperimentRunner(

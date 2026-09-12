@@ -43,6 +43,15 @@ class MVPOptimizer:
             # 2. Clamp to existing physical bounds (hardware constraint)
             usable_kw = max(res.min_power, min(res.max_power, planning_power_kw))
             
+            # Reject zero-power constraints
+            if usable_kw <= 0.0:
+                return DispatchPlan(
+                    dispatch_plan=[],
+                    objective_value=0.0,
+                    status=OptimizationStatus.INFEASIBLE,
+                    infeasibility_report=f"Resource {res.id} has usable power {usable_kw} <= 0"
+                )
+                
             # 3. Simple Greedy Allocation
             # We fulfill the required_kwh sequentially from earliest_start to latest_end.
             remaining_kwh = res.required_kwh
@@ -67,8 +76,16 @@ class MVPOptimizer:
                 remaining_kwh -= step_kwh
                 current_time += timedelta(minutes=15)
                 
+            if remaining_kwh > 0.0001:
+                return DispatchPlan(
+                    dispatch_plan=[],
+                    objective_value=0.0,
+                    status=OptimizationStatus.INFEASIBLE,
+                    infeasibility_report=f"Resource {res.id} missed required energy by {remaining_kwh} kWh before deadline"
+                )
+                
         return DispatchPlan(
             dispatch_plan=instructions,
             objective_value=0.0, # Placeholder for MVP
-            status=OptimizationStatus.OPTIMAL
+            status=OptimizationStatus.FEASIBLE
         )
