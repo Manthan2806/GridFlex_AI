@@ -1,0 +1,188 @@
+{
+  "comparison_version": "ev_random_forest_safety_tradeoff_v1",
+  "scope": "Validation-only comparison of fixed EV safety levels.",
+  "coverage_candidates": [
+    0.8,
+    0.85,
+    0.9
+  ],
+  "selection_rule": {
+    "minimum_trusted_kw_retention_percent": 50.0,
+    "then_choose": "highest coverage target among eligible levels",
+    "status": "hackathon working assumption; adjustable before final evaluation"
+  },
+  "results": [
+    {
+      "coverage_target": 0.8,
+      "maximum_allowed_overprediction_rate_percent": 20.0,
+      "actual_overprediction_rate_percent": 19.936508,
+      "mean_expected_kw": 2.510228,
+      "mean_trusted_kw": 2.182585,
+      "trusted_kw_retained_percent_of_expected": 86.947653,
+      "trusted_mae_ratio": 0.19066,
+      "trusted_mae_kw": 0.884101,
+      "dispatch_group_safety": {
+        "small": {
+          "row_count": 1176,
+          "safety_margin_ratio": 0.064295,
+          "overprediction_rate_percent": 19.982993,
+          "target_max_overprediction_rate_percent": 20.0,
+          "passes_risk_limit": true
+        },
+        "medium": {
+          "row_count": 999,
+          "safety_margin_ratio": 0.023989,
+          "overprediction_rate_percent": 19.91992,
+          "target_max_overprediction_rate_percent": 20.0,
+          "passes_risk_limit": true
+        },
+        "large": {
+          "row_count": 975,
+          "safety_margin_ratio": 0.107894,
+          "overprediction_rate_percent": 19.897436,
+          "target_max_overprediction_rate_percent": 20.0,
+          "passes_risk_limit": true
+        }
+      },
+      "risk_rule_passed": true
+    },
+    {
+      "coverage_target": 0.85,
+      "maximum_allowed_overprediction_rate_percent": 15.0,
+      "actual_overprediction_rate_percent": 14.952381,
+      "mean_expected_kw": 2.510228,
+      "mean_trusted_kw": 1.497442,
+      "trusted_kw_retained_percent_of_expected": 59.653631,
+      "trusted_mae_ratio": 0.28707,
+      "trusted_mae_kw": 1.319761,
+      "dispatch_group_safety": {
+        "small": {
+          "row_count": 1176,
+          "safety_margin_ratio": 0.194635,
+          "overprediction_rate_percent": 14.965986,
+          "target_max_overprediction_rate_percent": 15.0,
+          "passes_risk_limit": true
+        },
+        "medium": {
+          "row_count": 999,
+          "safety_margin_ratio": 0.153009,
+          "overprediction_rate_percent": 14.914915,
+          "target_max_overprediction_rate_percent": 15.0,
+          "passes_risk_limit": true
+        },
+        "large": {
+          "row_count": 975,
+          "safety_margin_ratio": 0.297025,
+          "overprediction_rate_percent": 14.974359,
+          "target_max_overprediction_rate_percent": 15.0,
+          "passes_risk_limit": true
+        }
+      },
+      "risk_rule_passed": true
+    },
+    {
+      "coverage_target": 0.9,
+      "maximum_allowed_overprediction_rate_percent": 10.0,
+      "actual_overprediction_rate_percent": 9.936508,
+      "mean_expected_kw": 2.510228,
+      "mean_trusted_kw": 0.78956,
+      "trusted_kw_retained_percent_of_expected": 31.45373,
+      "trusted_mae_ratio": 0.411725,
+      "trusted_mae_kw": 1.835874,
+      "dispatch_group_safety": {
+        "small": {
+          "row_count": 1176,
+          "safety_margin_ratio": 0.366888,
+          "overprediction_rate_percent": 9.94898,
+          "target_max_overprediction_rate_percent": 10.0,
+          "passes_risk_limit": true
+        },
+        "medium": {
+          "row_count": 999,
+          "safety_margin_ratio": 0.30563,
+          "overprediction_rate_percent": 9.90991,
+          "target_max_overprediction_rate_percent": 10.0,
+          "passes_risk_limit": true
+        },
+        "large": {
+          "row_count": 975,
+          "safety_margin_ratio": 0.473584,
+          "overprediction_rate_percent": 9.948718,
+          "target_max_overprediction_rate_percent": 10.0,
+          "passes_risk_limit": true
+        }
+      },
+      "risk_rule_passed": true
+    }
+  ],
+  "selected": {
+    "coverage_target": 0.85,
+    "maximum_allowed_overprediction_rate_percent": 15.0,
+    "actual_overprediction_rate_percent": 14.952381,
+    "mean_expected_kw": 2.510228,
+    "mean_trusted_kw": 1.497442,
+    "trusted_kw_retained_percent_of_expected": 59.653631,
+    "trusted_mae_ratio": 0.28707,
+    "trusted_mae_kw": 1.319761,
+    "dispatch_group_safety": {
+      "small": {
+        "row_count": 1176,
+        "safety_margin_ratio": 0.194635,
+        "overprediction_rate_percent": 14.965986,
+        "target_max_overprediction_rate_percent": 15.0,
+        "passes_risk_limit": true
+      },
+      "medium": {
+        "row_count": 999,
+        "safety_margin_ratio": 0.153009,
+        "overprediction_rate_percent": 14.914915,
+        "target_max_overprediction_rate_percent": 15.0,
+        "passes_risk_limit": true
+      },
+      "large": {
+        "row_count": 975,
+        "safety_margin_ratio": 0.297025,
+        "overprediction_rate_percent": 14.974359,
+        "target_max_overprediction_rate_percent": 15.0,
+        "passes_risk_limit": true
+      }
+    },
+    "risk_rule_passed": true
+  },
+  "selection_status": "selected_on_validation_test_still_sealed",
+  "test_holdout": {
+    "row_count": 3150,
+    "targets_read": false,
+    "status": "sealed"
+  },
+  "limitations": [
+    "Safety margins were calibrated and measured on the same validation split.",
+    "The 50% retained-kW floor is a working product choice, not a grid standard.",
+    "Results describe hybrid/synthetic EV behaviour, not real Ahmedabad reliability."
+  ],
+  "selected_model": {
+    "name": "shallower",
+    "parameters": {
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt",
+      "random_state": 2806,
+      "n_jobs": 1
+    }
+  },
+  "inputs": {
+    "training_table": {
+      "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+      "sha256": "ad722fed3c80feea2fc6846bf2c185667f30f81a7a776a70f5de6ea5bf9e4e65"
+    },
+    "baseline_report": {
+      "path": "data\\processed\\ev_training\\ev_baseline_evaluation.json",
+      "sha256": "10e0e1fb9a242bf06857558a5d9d8a214e52f4013bd50423f3b4abbcb943869d"
+    },
+    "tuning_report": {
+      "path": "data\\processed\\ev_training\\ev_random_forest_tuning.json",
+      "sha256": "bb4d15217df8c39737416ede8e9cae3b5247496da262ed1fdfc7f4ec645ef1de"
+    }
+  }
+}

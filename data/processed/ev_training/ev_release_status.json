@@ -1,0 +1,35 @@
+{
+  "handoff_version": "ev_experiment_handoff_v1",
+  "release_status": "experimental_not_deployable",
+  "deployment_allowed": false,
+  "demo_allowed": true,
+  "demo_label_required": "experimental offline estimate",
+  "holdout": {
+    "consumed": true,
+    "reuse_for_tuning_allowed": false,
+    "row_count": 3150
+  },
+  "acceptance": {
+    "passed": false,
+    "failed_checks": [
+      "all_dispatch_groups_pass_overprediction_limit"
+    ]
+  },
+  "model_artifact_saved": false,
+  "required_backend_action": "block model-backed power commitments",
+  "next_valid_experiment_requires": [
+    "a newly frozen candidate developed without using this holdout",
+    "a genuinely new untouched holdout dataset",
+    "acceptance rules declared before that new holdout is opened"
+  ],
+  "evidence": {
+    "locked_config": {
+      "path": "data\\processed\\ev_training\\ev_model_candidate_config.json",
+      "sha256": "b5ff56e00f11d8979b0c9a9d420bfbd2bebc1ab75af780293bdbfdf15064a924"
+    },
+    "final_report": {
+      "path": "data\\processed\\ev_training\\ev_final_holdout_evaluation.json",
+      "sha256": "351a0b043101b4d8e53f1c9e983761e4bc9e4f84107bd060764139d9ad3279f3"
+    }
+  }
+}
