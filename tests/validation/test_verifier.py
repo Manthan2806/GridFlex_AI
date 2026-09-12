@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 from backend.app.schemas.runs import SimulationInput, SimulationOutput, ActualResponse
@@ -16,7 +16,7 @@ from experiments.metrics import (
     calculate_reliability,
     calculate_rebound
 )
-from tests.validation.verifier import SimulationVerifier
+from backend.app.services.verification_service import SimulationVerifier
 
 # --- Metrics Unit Tests ---
 
@@ -174,4 +174,140 @@ def test_verifier_constraint_violation():
     assert res.constraint_violation_count == 2
     assert "below min power 5.0" in res.violations[0]
     assert "exceeded max power 10.0" in res.violations[1]
+
+
+def _timestamped_input(*instructions: DispatchInstruction) -> SimulationInput:
+    start = datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc)
+    resource = FlexibilityResource(
+        id="res-time",
+        type=ResourceType.EV,
+        location_id="loc",
+        rated_power_kw=10.0,
+        earliest_start=start,
+        latest_end=start + timedelta(hours=2),
+        required_kwh=0.0,
+        minimum_kwh=0.0,
+        maximum_kwh=10.0,
+        minimum_duration=15,
+        maximum_duration=120,
+        deadline=start + timedelta(hours=2),
+        min_power=0.0,
+        max_power=10.0,
+        historical_response=[],
+        override_rate=0.0,
+        availability_rate=1.0,
+    )
+    return SimulationInput(
+        scenario=Scenario(
+            scenario_id="timestamp-validation",
+            resources=[resource],
+            disruption_specs={},
+            seeds={},
+        ),
+        initial_resource_states={},
+        renewable_demand_forecasts=[],
+        dispatch_plan=DispatchPlan(
+            dispatch_plan=list(instructions),
+            objective_value=0.0,
+            status=OptimizationStatus.FEASIBLE,
+        ),
+        system_constraints={},
+    )
+
+
+def _empty_output() -> SimulationOutput:
+    return SimulationOutput(
+        actual_response=[],
+        resource_state_evolution=[],
+        renewable_outcomes=[],
+        system_outcomes=[],
+        event_records={},
+    )
+
+
+@pytest.mark.parametrize(
+    ("instruction", "message"),
+    [
+        (
+            DispatchInstruction(
+                resource_id="missing-resource",
+                time_step=datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc),
+                power_kw=1.0,
+            ),
+            "Unknown resource",
+        ),
+        (
+            DispatchInstruction(
+                resource_id="res-time",
+                time_step=datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc),
+                power_kw=-1.0,
+            ),
+            "Negative power",
+        ),
+        (
+            DispatchInstruction(
+                resource_id="res-time",
+                time_step=datetime(2026, 1, 1, 10, 7, tzinfo=timezone.utc),
+                power_kw=1.0,
+            ),
+            "Non-15-minute timestamp",
+        ),
+        (
+            DispatchInstruction(
+                resource_id="res-time",
+                time_step=datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc),
+                power_kw=1.0,
+            ),
+            "outside time window",
+        ),
+    ],
+)
+def test_verifier_rejects_invalid_dispatch_instruction(instruction, message):
+    result = SimulationVerifier().verify(
+        _timestamped_input(instruction),
+        _empty_output(),
+        tolerance_kw=0.0,
+    )
+
+    assert not result.passed
+    assert result.constraint_violation_count >= 1
+    assert any(message in violation for violation in result.violations)
+
+
+def test_verifier_rejects_duplicate_resource_timestamp():
+    timestamp = datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc)
+    first = DispatchInstruction(resource_id="res-time", time_step=timestamp, power_kw=1.0)
+    duplicate = DispatchInstruction(resource_id="res-time", time_step=timestamp, power_kw=2.0)
+
+    result = SimulationVerifier().verify(
+        _timestamped_input(first, duplicate),
+        _empty_output(),
+        tolerance_kw=0.0,
+    )
+
+    assert not result.passed
+    assert result.constraint_violation_count == 1
+    assert any("Duplicate instruction" in violation for violation in result.violations)
+
+
+def test_verifier_rejects_feeder_capacity_violation():
+    timestamp = datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc)
+    sim_input = _timestamped_input(
+        DispatchInstruction(
+            resource_id="res-time",
+            time_step=timestamp,
+            power_kw=6.0,
+        )
+    )
+    sim_input.system_constraints = {"feeder_capacity_kw": 5.0}
+
+    result = SimulationVerifier().verify(
+        sim_input,
+        _empty_output(),
+        tolerance_kw=0.0,
+    )
+
+    assert not result.passed
+    assert result.constraint_violation_count == 1
+    assert any("exceeded feeder capacity" in violation for violation in result.violations)
 

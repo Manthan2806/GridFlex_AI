@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-from typing import Dict
 
 from backend.app.domain.enums import OptimizationStatus, ResourceType
 from backend.app.domain.models import FlexibilityResource
-from backend.app.integrations.ai_ml_client import OfflineDemoEVModelClientV2
-from backend.app.schemas.dispatch import DispatchInstruction, DispatchPlan
+from backend.app.integrations.ai_ml_client import (
+    EVModelIntegrationError,
+    OfflineDemoEVModelClientV2,
+)
 from backend.app.schemas.runs import SimulationInput, SimulationOutput
 from backend.app.schemas.scenarios import Scenario
+from backend.app.services.dispatch_service import MVPOptimizer
+from backend.app.services.verification_service import SimulationVerifier
 from simulation.adapter import SimulationAdapter
 
 
@@ -16,21 +19,21 @@ EV_DATA = (
     {
         "id": "ev-1",
         "rated_power_kw": 7.4,
-        "required_kwh": 20.0,
+        "required_kwh": 8.0,
         "availability_rate": 0.9,
         "override_rate": 0.05,
     },
     {
         "id": "ev-2",
         "rated_power_kw": 11.0,
-        "required_kwh": 35.0,
+        "required_kwh": 12.0,
         "availability_rate": 0.75,
         "override_rate": 0.2,
     },
     {
         "id": "ev-3",
         "rated_power_kw": 3.7,
-        "required_kwh": 15.0,
+        "required_kwh": 6.0,
         "availability_rate": 0.95,
         "override_rate": 0.02,
     },
@@ -38,8 +41,13 @@ EV_DATA = (
 
 
 def build_ev_scenario(event_time: datetime | None = None) -> Scenario:
-    earliest_start = event_time or datetime.now(timezone.utc)
-    latest_end = earliest_start + timedelta(hours=4)
+    raw_start = event_time or datetime.now(timezone.utc)
+    earliest_start = raw_start.replace(
+        minute=(raw_start.minute // 15) * 15,
+        second=0,
+        microsecond=0,
+    )
+    latest_end = earliest_start + timedelta(hours=8)
     resources = [
         FlexibilityResource(
             id=ev["id"],
@@ -52,7 +60,7 @@ def build_ev_scenario(event_time: datetime | None = None) -> Scenario:
             minimum_kwh=0.0,
             maximum_kwh=ev["required_kwh"],
             minimum_duration=0,
-            maximum_duration=240,
+            maximum_duration=480,
             deadline=latest_end,
             min_power=0.0,
             max_power=ev["rated_power_kw"],
@@ -67,29 +75,6 @@ def build_ev_scenario(event_time: datetime | None = None) -> Scenario:
         resources=resources,
         disruption_specs={},
         seeds={},
-    )
-
-
-def build_dispatch_plan(trusted_kw_values: Dict[str, float]) -> DispatchPlan:
-    total_trusted_kw = sum(trusted_kw_values.values())
-    dispatch_scale = (
-        1.0
-        if total_trusted_kw <= FEEDER_CAPACITY_KW
-        else FEEDER_CAPACITY_KW / total_trusted_kw
-    )
-    instructions = [
-        DispatchInstruction(
-            resource_id=ev["id"],
-            # The adapter maps integer 0 to the scenario's earliest start.
-            time_step=0,
-            power_kw=trusted_kw_values[ev["id"]] * dispatch_scale,
-        )
-        for ev in EV_DATA
-    ]
-    return DispatchPlan(
-        dispatch_plan=instructions,
-        objective_value=sum(instruction.power_kw for instruction in instructions),
-        status=OptimizationStatus.FEASIBLE,
     )
 
 
@@ -111,19 +96,51 @@ def run_integrated_simulation() -> dict:
         )
         for resource in scenario.resources
     }
-    trusted_kw_values = {
-        resource_id: prediction.trust_state.trusted_kw
+    trust_data = {
+        resource_id: prediction.trust_state
         for resource_id, prediction in predictions.items()
     }
-    dispatch_plan = build_dispatch_plan(trusted_kw_values)
+    dispatch_plan = MVPOptimizer().generate_dispatch_plan(
+        scenario,
+        strategy_basis="trusted_kw",
+        context={"trust_data": trust_data},
+    )
+    if dispatch_plan.status != OptimizationStatus.FEASIBLE:
+        raise EVModelIntegrationError(
+            "Trusted EV dispatch is infeasible: "
+            f"{dispatch_plan.infeasibility_report or 'no details available'}"
+        )
+
+    dispatch_by_time: dict[object, float] = {}
+    for instruction in dispatch_plan.dispatch_plan:
+        dispatch_by_time[instruction.time_step] = (
+            dispatch_by_time.get(instruction.time_step, 0.0) + instruction.power_kw
+        )
+    peak_dispatch_kw = max(dispatch_by_time.values(), default=0.0)
+    if peak_dispatch_kw > FEEDER_CAPACITY_KW + 1e-9:
+        raise EVModelIntegrationError(
+            f"Dispatch peak {peak_dispatch_kw:.3f} kW exceeds the "
+            f"{FEEDER_CAPACITY_KW:.3f} kW feeder capacity"
+        )
+
     simulation_input = SimulationInput(
         scenario=scenario,
         initial_resource_states={},
         renewable_demand_forecasts=[],
         dispatch_plan=dispatch_plan,
-        system_constraints={},
+        system_constraints={"feeder_capacity_kw": FEEDER_CAPACITY_KW},
     )
     simulation_output: SimulationOutput = SimulationAdapter().run_simulation(simulation_input)
+    verification = SimulationVerifier().verify(
+        simulation_input,
+        simulation_output,
+        tolerance_kw=0.01,
+    )
+    if not verification.passed:
+        raise EVModelIntegrationError(
+            "Integrated simulation failed verification: "
+            + "; ".join(verification.violations)
+        )
     first_prediction = next(iter(predictions.values()))
 
     return {
@@ -142,4 +159,5 @@ def run_integrated_simulation() -> dict:
         ],
         "dispatch_plan": dispatch_plan.model_dump(mode="json"),
         "simulation": simulation_output.model_dump(mode="json"),
+        "verification": verification.model_dump(mode="json"),
     }

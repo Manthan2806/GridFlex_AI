@@ -171,6 +171,46 @@ This README is a navigation document, not a source of truth. It does not own pro
 
 For the current project status, success criteria, MVP scope, non-goals, and future possibilities, see PROJECT.md.
 
+## Getting Started
+
+### 1. Environment Setup
+The project uses a standard Python virtual environment.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Dependency Installation
+Install the necessary runtime dependencies:
+```bash
+pip install -r requirements.txt
+```
+For development and testing, also install:
+```bash
+pip install -r requirements-dev.txt
+```
+
+### 3. Running Tests
+The test suite ensures the integrity of the data pipeline, model integration, and optimization engine.
+```bash
+python -m pytest -q
+```
+
+### 4. Running the MVP Experiment
+To run the end-to-end experiment demonstrating the tradeoff between baseline (potential_kw) and trust-aware (trusted_kw) dispatch:
+```bash
+python scripts/run_mvp_experiment.py
+```
+This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
+
+### 5. Demo Mode / EV Model Limitation
+The MVP experiment uses Candidate v2 through `OfflineDemoEVModelClientV2(demo_mode=True)`. Candidate v2 passed its
+declared independent offline holdout checks and has status **accepted_for_offline_demo**. It loads a saved, hash-checked
+model artifact and does not retrain during a request.
+
+Candidate v2 is suitable for the hackathon prototype, but real-world deployment remains disabled. Candidate v1 and
+`ExperimentalEVModelClient` remain in the repository only for reproducibility and historical tests.
+
 ## Status
 
 DRAFT

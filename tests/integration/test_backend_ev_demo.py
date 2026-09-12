@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
@@ -14,19 +13,27 @@ def test_simulate_endpoint_uses_experimental_ev_model():
     assert payload["release_status"] == "accepted_for_offline_demo"
     assert payload["label"] == "offline demo estimate (hybrid/synthetic evidence)"
     assert len(payload["trust_states"]) == 3
-    assert len(payload["dispatch_plan"]["dispatch_plan"]) == 3
+    dispatch_rows = payload["dispatch_plan"]["dispatch_plan"]
+    assert len(dispatch_rows) > 3
+    assert len({row["time_step"] for row in dispatch_rows}) > 1
     assert payload["dispatch_plan"]["status"] == "FEASIBLE"
+    assert payload["verification"]["passed"] is True
+    assert payload["verification"]["violations"] == []
 
     for state in payload["trust_states"]:
         assert state["trusted_kw"] <= state["expected_kw"] <= state["potential_kw"]
 
-    dispatched_by_resource = {
-        row["resource_id"]: row["power_kw"]
-        for row in payload["dispatch_plan"]["dispatch_plan"]
+    trusted_by_resource = {
+        state["resource_id"]: state["trusted_kw"]
+        for state in payload["trust_states"]
     }
-    trusted_total = sum(row["trusted_kw"] for row in payload["trust_states"])
-    expected_scale = min(1.0, 15.0 / trusted_total)
-    for state in payload["trust_states"]:
-        assert dispatched_by_resource[state["resource_id"]] == pytest.approx(
-            state["trusted_kw"] * expected_scale
+    dispatched_by_time = {}
+    for row in dispatch_rows:
+        assert row["power_kw"] <= trusted_by_resource[row["resource_id"]] + 1e-9
+        dispatched_by_time[row["time_step"]] = (
+            dispatched_by_time.get(row["time_step"], 0.0) + row["power_kw"]
         )
+
+    assert max(dispatched_by_time.values()) <= 15.0 + 1e-9
+    for state in payload["trust_states"]:
+        assert any(row["resource_id"] == state["resource_id"] for row in dispatch_rows)

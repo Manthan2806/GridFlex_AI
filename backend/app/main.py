@@ -76,8 +76,18 @@ def _save_run(result: dict) -> dict:
     run_id = str(uuid4())
     dispatch_rows = result["dispatch_plan"]["dispatch_plan"]
     response_rows = result["simulation"]["actual_response"]
-    total_dispatched_kw = sum(float(row["power_kw"]) for row in dispatch_rows)
-    total_delivered_kw = sum(float(row["delivered_kw"]) for row in response_rows)
+
+    def peak_power(rows: list[dict], value_key: str) -> float:
+        totals_by_time: dict[str, float] = {}
+        for row in rows:
+            time_key = str(row["time_step"])
+            totals_by_time[time_key] = (
+                totals_by_time.get(time_key, 0.0) + float(row[value_key])
+            )
+        return max(totals_by_time.values(), default=0.0)
+
+    total_dispatched_kw = peak_power(dispatch_rows, "power_kw")
+    total_delivered_kw = peak_power(response_rows, "delivered_kw")
     result = {"run_id": run_id, **result}
 
     with SessionLocal() as session:

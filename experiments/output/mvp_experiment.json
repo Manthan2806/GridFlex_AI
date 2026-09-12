@@ -1,0 +1,35 @@
+{
+  "scenario_id": "mvp-demo-scen-001",
+  "seed": 42,
+  "baseline_plan_status": "FEASIBLE",
+  "trust_aware_plan_status": "FEASIBLE",
+  "all_strategies_passed": true,
+  "trust_state_summary": {
+    "total_potential_kw": 51.0,
+    "total_expected_kw": 24.467080597123466,
+    "total_trusted_kw": 11.293184500188255,
+    "trusted_expected_retention_percent": 46.15664895269919
+  },
+  "baseline_metrics": {
+    "passed": true,
+    "delivered_flexibility_error": 0.0,
+    "overcommitment": 0.0,
+    "constraint_violation_count": 0,
+    "deadline_violation_count": 0,
+    "reliability": 1.0,
+    "renewable_absorption": null,
+    "rebound": null,
+    "violations": []
+  },
+  "trust_aware_metrics": {
+    "passed": true,
+    "delivered_flexibility_error": 0.0,
+    "overcommitment": 0.0,
+    "constraint_violation_count": 0,
+    "deadline_violation_count": 0,
+    "reliability": 1.0,
+    "renewable_absorption": null,
+    "rebound": null,
+    "violations": []
+  }
+}

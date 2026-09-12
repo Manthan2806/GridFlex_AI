@@ -22,13 +22,40 @@ def test_rejected_model_requires_explicit_demo_mode():
 
 
 def test_prediction_maps_to_backend_trust_contract():
+    # Normal case
     trust = _trust_state_from_output(
-        {"requested_dispatch_kw": 4.0, "expected_kw": 2.0, "trusted_kw": 1.4}
+        {
+            "requested_dispatch_kw": 4.0,
+            "expected_kw": 2.0,
+            "trusted_kw": 1.4,
+            "safety_coverage": 0.85, # Metadata, unused for confidence now
+        }
     )
     assert trust.potential_kw == 4.0
     assert trust.expected_kw == 2.0
     assert trust.trusted_kw == 1.4
-    assert trust.confidence == pytest.approx(0.7)
+    assert trust.confidence == 0.7  # 1.4 / 2.0
+
+    # Zero expected case
+    trust_zero = _trust_state_from_output(
+        {
+            "requested_dispatch_kw": 4.0,
+            "expected_kw": 0.0,
+            "trusted_kw": 0.0,
+        }
+    )
+    assert trust_zero.confidence == 0.0
+
+def test_evidence_hashing_cross_platform(tmp_path):
+    from backend.app.integrations.ai_ml_client import _sha256
+
+    file_lf = tmp_path / "test_lf.csv"
+    file_lf.write_bytes(b"a,b,c\n1,2,3\n")
+
+    file_crlf = tmp_path / "test_crlf.csv"
+    file_crlf.write_bytes(b"a,b,c\r\n1,2,3\r\n")
+
+    assert _sha256(file_lf) == _sha256(file_crlf)
 
 
 def test_demo_client_predicts_from_locked_features():
