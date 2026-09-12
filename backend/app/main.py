@@ -136,10 +136,15 @@ def simulate() -> dict:
             "results": results,
         }
         try:
+            import os, sys
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
             from datetime import datetime
             from backend.app.services.peak_alignment import compute_peak_alignment_score
             response["peak_alignment_score"] = compute_peak_alignment_score(datetime.utcnow())
-        except Exception:
+        except Exception as e:
+            print("PEAK ALIGNMENT ERROR:", repr(e))
             response["peak_alignment_score"] = None
         session.add(
             SimulationRun(
@@ -197,3 +202,4 @@ def simulate_full():
     from backend.app.services.integrated_simulation import run_integrated_simulation
     result = run_integrated_simulation()
     return result
+
