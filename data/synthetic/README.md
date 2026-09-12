@@ -3,7 +3,7 @@
 The files in this directory are generated data for simulation-first MVP work.
 They are not measurements from real people, vehicles, utilities, or locations.
 
-## EV portfolio v2: ACN + synthetic hybrid
+## EV portfolio: ACN + synthetic hybrid
 
 Run from the repository root:
 
@@ -29,3 +29,9 @@ Arrival/departure patterns, delivered energy, and observed charging power come
 from ACN. Battery/SOC values and repeated behaviour are synthetic because ACN
 does not provide those fields. ACN observations are from US workplace sites and
 must not be described as Indian residential EV behaviour.
+
+GridFlex uses 15-minute simulation blocks. Each EV start and end time is aligned
+to that grid using only complete blocks contained within the ACN-derived session
+duration. Energy requirements are capped to what the charger can physically
+deliver inside that aligned window. SOC values use three decimal places so small
+but non-zero energy requirements do not disappear through rounding.
