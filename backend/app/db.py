@@ -34,3 +34,25 @@ class SimulationRun(Base):
     total_dispatched_kw: Mapped[float] = mapped_column(Float, nullable=False)
     total_delivered_kw: Mapped[float] = mapped_column(Float, nullable=False)
     results_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+
+class WaterHeaterResource(Base):
+    __tablename__ = "industrial_water_heaters"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    rated_power_kw: Mapped[float] = mapped_column(Float, nullable=False)
+    required_kwh: Mapped[float] = mapped_column(Float, nullable=False)
+    availability_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    override_rate: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class WaterHeaterSimulationRun(Base):
+    __tablename__ = "water_heater_simulation_runs"
+
+    run_id: Mapped[str] = mapped_column(String, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
+    feeder_capacity_kw: Mapped[float] = mapped_column(Float, nullable=False)
+    total_dispatched_kw: Mapped[float] = mapped_column(Float, nullable=False)
+    total_delivered_kw: Mapped[float] = mapped_column(Float, nullable=False)
+    results_json: Mapped[str] = mapped_column(Text, nullable=False)

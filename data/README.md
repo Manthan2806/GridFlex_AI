@@ -37,7 +37,6 @@ Generated device-level flexibility and behavior data. **Synthetic data must reco
 
 ## Current Status
 
-<<<<<<< HEAD
 - EV data: 700 ACN-anchored synthetic resource profiles and 21,000 behavior rows.
 - Solar data: legacy NASA POWER hourly data for an Ahmedabad demonstration point,
   expanded to clearly labelled 15-minute computed rows for 2024.
@@ -69,6 +68,3 @@ python -m ai_ml.prepare_weather_data
 Weather observations do not occur at every 15-minute simulation timestamp. The
 model should use the most recent known observation and must not describe the
 carried-forward value as a new measurement.
-=======
-No datasets have been downloaded. Datasets will be acquired or generated during the data acquisition phase.
->>>>>>> 1ef4f81fafd2ee185875a14dca5e40f604f18f08
