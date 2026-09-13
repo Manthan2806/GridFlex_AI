@@ -1,0 +1,360 @@
+{
+  "candidate_version": "ev_model_candidate_v2",
+  "status": "locked_for_new_holdout",
+  "data_boundary": {
+    "fit_rows": 14700,
+    "selection_rows": 1740,
+    "selection_resources": 58,
+    "calibration_rows": 1410,
+    "calibration_resources": 47,
+    "old_consumed_test_rows_used": 0
+  },
+  "baseline_selection_metrics": {
+    "row_count": 1740,
+    "mae_ratio": 0.171962,
+    "rmse_ratio": 0.245992,
+    "bias_ratio": -0.000748,
+    "mean_overestimation_ratio": 0.085607,
+    "mae_kw": 0.867366,
+    "rmse_kw": 1.781018,
+    "bias_kw": 0.031218,
+    "mean_overestimation_kw": 0.449292,
+    "prediction_bound_violations": 0
+  },
+  "candidates": [
+    {
+      "name": "random_forest_balanced",
+      "family": "RandomForestRegressor",
+      "parameters": {
+        "n_estimators": 300,
+        "max_depth": 10,
+        "min_samples_leaf": 6,
+        "max_features": 0.75,
+        "random_state": 2810,
+        "n_jobs": 1
+      },
+      "selection_metrics": {
+        "row_count": 1740,
+        "mae_ratio": 0.165563,
+        "rmse_ratio": 0.232424,
+        "bias_ratio": -0.003324,
+        "mean_overestimation_ratio": 0.081119,
+        "mae_kw": 0.833715,
+        "rmse_kw": 1.700906,
+        "bias_kw": 0.026078,
+        "mean_overestimation_kw": 0.429897,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "extra_trees_regularized",
+      "family": "ExtraTreesRegressor",
+      "parameters": {
+        "n_estimators": 300,
+        "max_depth": 12,
+        "min_samples_leaf": 6,
+        "max_features": 0.75,
+        "random_state": 2810,
+        "n_jobs": 1
+      },
+      "selection_metrics": {
+        "row_count": 1740,
+        "mae_ratio": 0.164164,
+        "rmse_ratio": 0.231597,
+        "bias_ratio": -0.001627,
+        "mean_overestimation_ratio": 0.081269,
+        "mae_kw": 0.822571,
+        "rmse_kw": 1.707899,
+        "bias_kw": 0.044124,
+        "mean_overestimation_kw": 0.433348,
+        "prediction_bound_violations": 0
+      }
+    },
+    {
+      "name": "hist_gradient_boosting",
+      "family": "HistGradientBoostingRegressor",
+      "parameters": {
+        "learning_rate": 0.05,
+        "max_iter": 200,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 20,
+        "l2_regularization": 1.0,
+        "random_state": 2810
+      },
+      "selection_metrics": {
+        "row_count": 1740,
+        "mae_ratio": 0.163794,
+        "rmse_ratio": 0.232295,
+        "bias_ratio": 0.000684,
+        "mean_overestimation_ratio": 0.082239,
+        "mae_kw": 0.828777,
+        "rmse_kw": 1.712975,
+        "bias_kw": 0.039895,
+        "mean_overestimation_kw": 0.434336,
+        "prediction_bound_violations": 0
+      }
+    }
+  ],
+  "selected": {
+    "name": "hist_gradient_boosting",
+    "family": "HistGradientBoostingRegressor",
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "random_state": 2810
+    },
+    "selection_metrics": {
+      "row_count": 1740,
+      "mae_ratio": 0.163794,
+      "rmse_ratio": 0.232295,
+      "bias_ratio": 0.000684,
+      "mean_overestimation_ratio": 0.082239,
+      "mae_kw": 0.828777,
+      "rmse_kw": 1.712975,
+      "bias_kw": 0.039895,
+      "mean_overestimation_kw": 0.434336,
+      "prediction_bound_violations": 0
+    }
+  },
+  "safety_calibration": {
+    "method": "conditional quantile lower bound with grouped split-conformal adjustment",
+    "coverage_target": 0.875,
+    "maximum_final_overprediction_percent": 15.0,
+    "dispatch_thresholds_kw": {
+      "small_max": 2.746666666666666,
+      "medium_max": 4.871
+    },
+    "groups": {
+      "small": {
+        "row_count": 623,
+        "conformal_adjustment_ratio": 0.15726502,
+        "overprediction_rate_percent": 12.359551,
+        "passes_15_percent_limit": true
+      },
+      "medium": {
+        "row_count": 439,
+        "conformal_adjustment_ratio": 0.09203596,
+        "overprediction_rate_percent": 12.300683,
+        "passes_15_percent_limit": true
+      },
+      "large": {
+        "row_count": 348,
+        "conformal_adjustment_ratio": 0.18028085,
+        "overprediction_rate_percent": 12.068966,
+        "passes_15_percent_limit": true
+      }
+    },
+    "lower_bound_candidates": [
+      {
+        "name": "hist_gradient_quantile_0.1",
+        "family": "HistGradientBoostingRegressor",
+        "parameters": {
+          "loss": "quantile",
+          "quantile": 0.1,
+          "learning_rate": 0.05,
+          "max_iter": 200,
+          "max_leaf_nodes": 15,
+          "min_samples_leaf": 20,
+          "l2_regularization": 1.0,
+          "random_state": 2810
+        },
+        "group_safety": {
+          "small": {
+            "row_count": 623,
+            "conformal_adjustment_ratio": 0.0,
+            "overprediction_rate_percent": 10.754414,
+            "passes_15_percent_limit": true
+          },
+          "medium": {
+            "row_count": 439,
+            "conformal_adjustment_ratio": 0.0,
+            "overprediction_rate_percent": 9.567198,
+            "passes_15_percent_limit": true
+          },
+          "large": {
+            "row_count": 348,
+            "conformal_adjustment_ratio": 0.0,
+            "overprediction_rate_percent": 11.206897,
+            "passes_15_percent_limit": true
+          }
+        },
+        "mean_trusted_kw": 0.742908,
+        "trusted_kw_retained_percent": 36.36721,
+        "all_groups_pass": true
+      },
+      {
+        "name": "hist_gradient_quantile_0.125",
+        "family": "HistGradientBoostingRegressor",
+        "parameters": {
+          "loss": "quantile",
+          "quantile": 0.125,
+          "learning_rate": 0.05,
+          "max_iter": 200,
+          "max_leaf_nodes": 15,
+          "min_samples_leaf": 20,
+          "l2_regularization": 1.0,
+          "random_state": 2810
+        },
+        "group_safety": {
+          "small": {
+            "row_count": 623,
+            "conformal_adjustment_ratio": 0.01432996,
+            "overprediction_rate_percent": 12.359551,
+            "passes_15_percent_limit": true
+          },
+          "medium": {
+            "row_count": 439,
+            "conformal_adjustment_ratio": 0.0,
+            "overprediction_rate_percent": 11.161731,
+            "passes_15_percent_limit": true
+          },
+          "large": {
+            "row_count": 348,
+            "conformal_adjustment_ratio": 0.07653376,
+            "overprediction_rate_percent": 12.068966,
+            "passes_15_percent_limit": true
+          }
+        },
+        "mean_trusted_kw": 0.95079,
+        "trusted_kw_retained_percent": 46.543517,
+        "all_groups_pass": true
+      },
+      {
+        "name": "hist_gradient_quantile_0.15",
+        "family": "HistGradientBoostingRegressor",
+        "parameters": {
+          "loss": "quantile",
+          "quantile": 0.15,
+          "learning_rate": 0.05,
+          "max_iter": 200,
+          "max_leaf_nodes": 15,
+          "min_samples_leaf": 20,
+          "l2_regularization": 1.0,
+          "random_state": 2810
+        },
+        "group_safety": {
+          "small": {
+            "row_count": 623,
+            "conformal_adjustment_ratio": 0.08742486,
+            "overprediction_rate_percent": 12.359551,
+            "passes_15_percent_limit": true
+          },
+          "medium": {
+            "row_count": 439,
+            "conformal_adjustment_ratio": 0.0144996,
+            "overprediction_rate_percent": 12.300683,
+            "passes_15_percent_limit": true
+          },
+          "large": {
+            "row_count": 348,
+            "conformal_adjustment_ratio": 0.1388632,
+            "overprediction_rate_percent": 12.068966,
+            "passes_15_percent_limit": true
+          }
+        },
+        "mean_trusted_kw": 1.03743,
+        "trusted_kw_retained_percent": 50.784755,
+        "all_groups_pass": true
+      },
+      {
+        "name": "hist_gradient_quantile_0.175",
+        "family": "HistGradientBoostingRegressor",
+        "parameters": {
+          "loss": "quantile",
+          "quantile": 0.175,
+          "learning_rate": 0.05,
+          "max_iter": 200,
+          "max_leaf_nodes": 15,
+          "min_samples_leaf": 20,
+          "l2_regularization": 1.0,
+          "random_state": 2810
+        },
+        "group_safety": {
+          "small": {
+            "row_count": 623,
+            "conformal_adjustment_ratio": 0.15726502,
+            "overprediction_rate_percent": 12.359551,
+            "passes_15_percent_limit": true
+          },
+          "medium": {
+            "row_count": 439,
+            "conformal_adjustment_ratio": 0.09203596,
+            "overprediction_rate_percent": 12.300683,
+            "passes_15_percent_limit": true
+          },
+          "large": {
+            "row_count": 348,
+            "conformal_adjustment_ratio": 0.18028085,
+            "overprediction_rate_percent": 12.068966,
+            "passes_15_percent_limit": true
+          }
+        },
+        "mean_trusted_kw": 1.044535,
+        "trusted_kw_retained_percent": 51.132577,
+        "all_groups_pass": true
+      }
+    ],
+    "selected_lower_bound": {
+      "name": "hist_gradient_quantile_0.175",
+      "family": "HistGradientBoostingRegressor",
+      "parameters": {
+        "loss": "quantile",
+        "quantile": 0.175,
+        "learning_rate": 0.05,
+        "max_iter": 200,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 20,
+        "l2_regularization": 1.0,
+        "random_state": 2810
+      },
+      "group_safety": {
+        "small": {
+          "row_count": 623,
+          "conformal_adjustment_ratio": 0.15726502,
+          "overprediction_rate_percent": 12.359551,
+          "passes_15_percent_limit": true
+        },
+        "medium": {
+          "row_count": 439,
+          "conformal_adjustment_ratio": 0.09203596,
+          "overprediction_rate_percent": 12.300683,
+          "passes_15_percent_limit": true
+        },
+        "large": {
+          "row_count": 348,
+          "conformal_adjustment_ratio": 0.18028085,
+          "overprediction_rate_percent": 12.068966,
+          "passes_15_percent_limit": true
+        }
+      },
+      "mean_trusted_kw": 1.044535,
+      "trusted_kw_retained_percent": 51.132577,
+      "all_groups_pass": true
+    },
+    "mean_expected_kw": 2.042797,
+    "mean_trusted_kw": 1.044535,
+    "trusted_kw_retained_percent": 51.132577,
+    "minimum_retention_percent": 50.0
+  },
+  "development_checks": {
+    "selected_expected_mae_ratio_beats_baseline": true,
+    "selected_expected_mae_kw_beats_baseline": true,
+    "all_calibration_groups_pass_15_percent_limit": true,
+    "trusted_kw_retention_passes_floor": true,
+    "old_test_outcomes_remained_sealed": true,
+    "selection_and_calibration_resources_are_disjoint": true
+  },
+  "limitations": [
+    "Development evidence uses ACN structure with synthetic EV behaviour.",
+    "Candidate 1's consumed test split was not used.",
+    "Passing development checks does not approve deployment.",
+    "A separately generated, source-disjoint holdout is still required."
+  ],
+  "input": {
+    "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+    "canonical_sha256": "aa410fd84cea451676503a3ee3079f756951f023dad612bd2f1c6b502a7c37d6"
+  }
+}

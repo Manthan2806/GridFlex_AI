@@ -1,0 +1,100 @@
+{
+  "evaluation_version": "ev_final_holdout_evaluation_v1",
+  "status": "final_holdout_evaluated_once",
+  "locked_config": {
+    "path": "data\\processed\\ev_training\\ev_model_candidate_config.json",
+    "sha256": "b5ff56e00f11d8979b0c9a9d420bfbd2bebc1ab75af780293bdbfdf15064a924"
+  },
+  "input": {
+    "path": "data\\processed\\ev_training\\ev_training_examples.csv",
+    "sha256": "ad722fed3c80feea2fc6846bf2c185667f30f81a7a776a70f5de6ea5bf9e4e65"
+  },
+  "holdout": {
+    "row_count": 3150,
+    "baseline_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.149405,
+      "rmse_ratio": 0.218525,
+      "bias_ratio": 0.00329,
+      "mean_overestimation_ratio": 0.076348,
+      "mae_kw": 0.735653,
+      "rmse_kw": 1.430999,
+      "bias_kw": -0.008785,
+      "mean_overestimation_kw": 0.363434,
+      "prediction_bound_violations": 0
+    },
+    "expected_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.148648,
+      "rmse_ratio": 0.207647,
+      "bias_ratio": -0.007023,
+      "mean_overestimation_ratio": 0.070813,
+      "mae_kw": 0.727312,
+      "rmse_kw": 1.335213,
+      "bias_kw": -0.041431,
+      "mean_overestimation_kw": 0.342941,
+      "prediction_bound_violations": 0
+    },
+    "trusted_metrics": {
+      "row_count": 3150,
+      "mae_ratio": 0.292454,
+      "rmse_ratio": 0.313923,
+      "bias_ratio": -0.227094,
+      "mean_overestimation_ratio": 0.03268,
+      "mae_kw": 1.50918,
+      "rmse_kw": 2.169474,
+      "bias_kw": -1.21794,
+      "mean_overestimation_kw": 0.14562,
+      "prediction_bound_violations": 0
+    },
+    "safety": {
+      "coverage_target": 0.85,
+      "overall_overprediction_rate_percent": 14.412698,
+      "maximum_allowed_overprediction_rate_percent": 15.0,
+      "mean_expected_kw": 2.830726,
+      "mean_trusted_kw": 1.654217,
+      "trusted_kw_retained_percent_of_expected": 58.437911,
+      "minimum_required_retention_percent": 50.0,
+      "dispatch_groups": {
+        "small": {
+          "row_count": 975,
+          "overprediction_rate_percent": 15.794872,
+          "maximum_allowed_percent": 15.0,
+          "passes": false
+        },
+        "medium": {
+          "row_count": 990,
+          "overprediction_rate_percent": 15.959596,
+          "maximum_allowed_percent": 15.0,
+          "passes": false
+        },
+        "large": {
+          "row_count": 1185,
+          "overprediction_rate_percent": 11.983122,
+          "maximum_allowed_percent": 15.0,
+          "passes": true
+        }
+      }
+    },
+    "acceptance_checks": {
+      "expected_mae_ratio_beats_baseline": true,
+      "expected_mae_kw_beats_baseline": true,
+      "expected_predictions_within_zero_and_one": true,
+      "trusted_predictions_never_exceed_expected": true,
+      "all_dispatch_groups_pass_overprediction_limit": false,
+      "overall_passes_overprediction_limit": true,
+      "trusted_kw_retention_passes_floor": true
+    },
+    "accepted": false
+  },
+  "decision": "rejected",
+  "limitations": [
+    "The EV records combine ACN session structure with synthetic behaviour.",
+    "This is offline evidence and not real Ahmedabad grid validation.",
+    "The holdout must not be reused for further tuning after this evaluation."
+  ],
+  "model_artifact": {
+    "saved": false,
+    "reason": "candidate failed a locked acceptance rule"
+  }
+}

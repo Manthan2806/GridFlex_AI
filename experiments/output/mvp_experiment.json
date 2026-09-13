@@ -1,0 +1,77 @@
+{
+  "scenario_id": "mvp-demo-scen-001",
+  "seed": 42,
+  "baseline_plan_status": "FEASIBLE",
+  "trust_aware_plan_status": "FEASIBLE",
+  "all_strategies_passed": true,
+  "trust_state_summary": {
+    "total_potential_kw": 51.0,
+    "total_expected_kw": 24.467080597123466,
+    "total_trusted_kw": 11.293184500188255,
+    "trusted_expected_retention_percent": 46.15664895269919
+  },
+  "baseline_metrics": {
+    "passed": true,
+    "delivered_flexibility_error": 0.0,
+    "overcommitment": 0.0,
+    "constraint_violation_count": 0,
+    "deadline_violation_count": 0,
+    "reliability": 1.0,
+    "renewable_absorption": null,
+    "rebound": null,
+    "violations": []
+  },
+  "trust_aware_metrics": {
+    "passed": true,
+    "delivered_flexibility_error": 0.0,
+    "overcommitment": 0.0,
+    "constraint_violation_count": 0,
+    "deadline_violation_count": 0,
+    "reliability": 1.0,
+    "renewable_absorption": null,
+    "rebound": null,
+    "violations": []
+  },
+  "seeded_disruption_experiment": {
+    "evidence_type": "synthetic seeded experiment; not real-world validation",
+    "shared_seed": 42,
+    "same_outcome_rule_for_both_strategies": true,
+    "baseline_metrics": {
+      "passed": false,
+      "delivered_flexibility_error": 70.60000000000001,
+      "overcommitment": 70.6,
+      "constraint_violation_count": 0,
+      "deadline_violation_count": 4,
+      "reliability": 0.41166666666666674,
+      "renewable_absorption": null,
+      "rebound": null,
+      "violations": [
+        "Resource ev-001 missed required 4.0 kWh (delivered 2.2 kWh)",
+        "Resource ev-002 missed required 6.0 kWh (delivered 5.4 kWh)",
+        "Resource ev-003 missed required 8.0 kWh (delivered 2.75 kWh)",
+        "Resource ev-005 missed required 10.0 kWh (delivered 0.0 kWh)"
+      ]
+    },
+    "trust_aware_metrics": {
+      "passed": false,
+      "delivered_flexibility_error": 39.702228694159125,
+      "overcommitment": 39.70222869415912,
+      "constraint_violation_count": 0,
+      "deadline_violation_count": 4,
+      "reliability": 0.6691480942153407,
+      "renewable_absorption": null,
+      "rebound": null,
+      "violations": [
+        "Resource ev-001 missed required 4.0 kWh (delivered 3.6019718790778987 kWh)",
+        "Resource ev-002 missed required 6.0 kWh (delivered 4.282170371164244 kWh)",
+        "Resource ev-003 missed required 8.0 kWh (delivered 5.0116927276688905 kWh)",
+        "Resource ev-005 missed required 10.0 kWh (delivered 5.178607848549188 kWh)"
+      ]
+    },
+    "baseline_overcommitment_kwh": 17.65,
+    "trust_aware_overcommitment_kwh": 9.92555717353978,
+    "overcommitment_reduction_kwh": 7.724442826460219,
+    "overcommitment_reduction_percent": 43.76454859184261,
+    "reliability_improvement_percentage_points": 25.7481427548674
+  }
+}

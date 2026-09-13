@@ -1,16 +1,58 @@
-# GridFlex AI
+# UrjaSarathi
 
-## What GridFlex AI Is
+## What UrjaSarathi Is
 
-GridFlex AI is a simulation-first flexibility intelligence and orchestration system for utilities and demand-response aggregators. It coordinates flexible electricity demand with renewable-energy availability by representing heterogeneous flexible loads using their actual operational constraints and estimating how reliably that flexibility can actually be delivered.
+UrjaSarathi is a simulation-first flexibility intelligence and orchestration system for utilities and demand-response aggregators. It coordinates flexible electricity demand with renewable-energy availability by representing flexible loads using their operational constraints and estimating how reliably that flexibility can be delivered.
+
+## Current Hackathon Prototype
+
+The runnable prototype covers EVs and water heaters. The React interface calls the
+FastAPI backend, which loads saved model artifacts, calculates potential, expected,
+and trusted flexibility, creates a feeder-limited EV dispatch plan, runs the
+15-minute simulation, verifies delivery, and stores simulation results locally.
+
+EV Candidate v2 passed its source-disjoint hybrid/synthetic offline demo gate. The
+water-heater model passed its declared hackathon-prototype gate using synthetic
+evidence. Both are suitable for this prototype, but neither is approved for live
+grid control. Industrial loads are intentionally excluded because no industrial
+model has been trained.
+
+### Run the integrated demo
+
+From the repository root, prepare Python once:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+uvicorn backend.app.main:app --reload --port 8000
+```
+
+Keep that terminal running. In a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite sends `/api/*` requests to FastAPI on port 8000.
+The Overview, Flexibility, and Dispatch pages load the combined backend portfolio;
+the EV simulation, EV horizon experiment, and water-heater action all execute real
+backend endpoints. To run the frontend with demonstration-only mock data instead,
+set `VITE_MOCK_MODE=true`.
+
+API documentation remains available at `http://127.0.0.1:8000/docs`. Run all backend
+checks from the repository root with `python -m pytest -q`; run frontend validation
+with `cd frontend`, `npm run typecheck`, and `npm run build`.
 
 ## Core Concept
 
-**Trusted Flexibility.** Theoretical flexibility says "this load can shift X kW." Trusted flexibility says "this load can *reliably* deliver Y kW at time t, given its operational constraints, historical response behavior, and current uncertainty." GridFlex AI converts optimistic capacity into a time-dependent, confidence-weighted trust state before dispatch, then verifies actual response and learns from it.
+**Trusted Flexibility.** Theoretical flexibility says "this load can shift X kW." Trusted flexibility says "this load can *reliably* deliver Y kW at time t, given its operational constraints, historical response behavior, and current uncertainty." UrjaSarathi converts optimistic capacity into a time-dependent, confidence-weighted trust state before dispatch, then verifies actual response.
 
 ## Core System Loop
 
-GridFlex AI follows a closed-loop process spanning observation, representation, estimation, trust evaluation, opportunity matching, dispatch, simulation, verification, and learning.
+UrjaSarathi follows a loop spanning observation, representation, estimation, trust evaluation, opportunity matching, dispatch, simulation, verification, and future learning.
 
 The canonical execution ordering is:
 
@@ -47,13 +89,13 @@ See ARCHITECTURE.md for component boundaries, data flow, failure boundaries, and
 | Database | PostgreSQL |
 | Optimization | OR-Tools CP-SAT |
 | Simulation | Custom Python engine |
-| AI/ML | Statistical/ML (specific model TBD) |
+| AI/ML | EV Candidate v2 + water-heater Candidate v1 (prototype-only) |
 | Time Resolution | 15 minutes (MVP) |
 
 ## Repository Structure
 
 ```text
-GridFlex AI/
+UrjaSarathi/
 ├── README.md
 ├── NAMING_AND_CONVENTIONS.md
 ├── DEPENDENCY_MAP.md
@@ -145,6 +187,51 @@ This README is a navigation document, not a source of truth. It does not own pro
 ## Pointer to PROJECT.md
 
 For the current project status, success criteria, MVP scope, non-goals, and future possibilities, see PROJECT.md.
+
+## Getting Started
+
+### 1. Environment Setup
+The project uses a standard Python virtual environment.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Dependency Installation
+Install the necessary runtime dependencies:
+```bash
+pip install -r requirements.txt
+```
+For development and testing, also install:
+```bash
+pip install -r requirements-dev.txt
+```
+
+### 3. Running Tests
+The test suite ensures the integrity of the data pipeline, model integration, and optimization engine.
+```bash
+python -m pytest -q
+```
+
+### 4. Running the MVP Experiment
+To run the end-to-end experiment demonstrating the tradeoff between baseline (potential_kw) and trust-aware (trusted_kw) dispatch:
+```bash
+python scripts/run_mvp_experiment.py
+```
+This script runs a paired deterministic simulation and outputs a comprehensive metric comparison. A structured JSON result is also saved to `experiments/output/mvp_experiment.json`.
+
+It also runs a separate, clearly labelled seeded-disruption comparison. Synthetic
+EV availability and user-override events are generated from the same seed,
+resource ID and timestamp for both strategies, so the comparison is repeatable
+and fair. This section is demonstration evidence, not real-world validation.
+
+### 5. Demo Mode / EV Model Limitation
+The MVP experiment uses Candidate v2 through `OfflineDemoEVModelClientV2(demo_mode=True)`. Candidate v2 passed its
+declared independent offline holdout checks and has status **accepted_for_offline_demo**. It loads a saved, hash-checked
+model artifact and does not retrain during a request.
+
+Candidate v2 is suitable for the hackathon prototype, but real-world deployment remains disabled. Candidate v1 and
+`ExperimentalEVModelClient` remain in the repository only for reproducibility and historical tests.
 
 ## Status
 

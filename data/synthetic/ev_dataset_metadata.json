@@ -1,0 +1,58 @@
+{
+  "seed": 2806,
+  "resource_count": 700,
+  "history_per_resource": 30,
+  "generator_version": "gridflex-acn-hybrid-ev-v2",
+  "source": "ACN-Data Static",
+  "source_url": "https://github.com/tongxin-li/ACN-Data-Static",
+  "source_commit_reference": "abb7cf15cc7108913e965d4375cc7270d532b65f",
+  "available_acn_sessions": 85877,
+  "sampled_acn_sessions": 700,
+  "candidate_sessions_examined": 2000,
+  "reused_pinned_source_summaries": true,
+  "sample_method": "sorted paths then seeded random sample without replacement",
+  "geographic_scope": "ACN US workplace sites; GridFlex locations are synthetic",
+  "scenario_date": "2026-01-15T00:00:00+05:30",
+  "time_grid_minutes": 15,
+  "session_alignment": "Start times are rounded down to a quarter hour. End times retain only complete 15-minute blocks within the ACN-derived connection duration.",
+  "energy_feasibility_rule": "maximum_kwh and required_kwh never exceed rated power multiplied by the aligned connection duration",
+  "split_rule": "resource-level 70/15/15",
+  "files": {
+    "source_samples\\acn_session_summaries.csv": {
+      "rows": 700,
+      "sha256": "9322cc58fed12caf1f5a9b70d7b643a16421078c2ddd818bdb4c542e8823785e",
+      "classification": "COMPUTED summary of REAL/PUBLIC ACN data"
+    },
+    "ev\\ev_resources.csv": {
+      "rows": 700,
+      "sha256": "f5b395b5e47c5994fcbdf7945cec8084099afe9d1d5222ad6d1ceb15d6a15757",
+      "classification": "HYBRID: ACN-derived + SYNTHETIC"
+    },
+    "behavior\\ev_historical_response.csv": {
+      "rows": 21000,
+      "sha256": "878face87d5dcb3e18fab819ad738b53163c917c65967cb468329ff7ecff54b3",
+      "classification": "SYNTHETIC, calibrated from linked ACN session"
+    }
+  },
+  "field_provenance": {
+    "ACN-derived": [
+      "arrival/departure pattern",
+      "delivered energy",
+      "observed charging power",
+      "source site and session"
+    ],
+    "synthetic": [
+      "battery capacity",
+      "arrival/target SOC",
+      "override and availability priors",
+      "historical outcomes",
+      "GridFlex location and state"
+    ]
+  },
+  "limitations": [
+    "ACN observations are US workplace charging sessions, not Indian residential EV data.",
+    "One sampled ACN session anchors each virtual EV; it is not a persistent real vehicle identity.",
+    "Overrides, failures, battery capacity, SOC, and repeated history are synthetic.",
+    "Partial connection time below one complete 15-minute block is not represented."
+  ]
+}

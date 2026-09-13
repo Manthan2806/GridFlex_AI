@@ -1,0 +1,225 @@
+{
+  "candidate_version": "water_heater_candidate_v1",
+  "status": "accepted_for_safety_calibration",
+  "deployment_allowed": false,
+  "model_artifact_saved": false,
+  "data_boundary": {
+    "fit_rows": 14700,
+    "fit_resources": 490,
+    "validation_rows": 3150,
+    "validation_resources": 105,
+    "sealed_test_rows": 3150,
+    "sealed_test_resources": 105,
+    "test_outcomes_read": false
+  },
+  "model": {
+    "family": "HistGradientBoostingRegressor",
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "random_state": 2901
+    },
+    "target": "target_response_ratio",
+    "prediction_clipping": "final expected ratio clipped to 0..1",
+    "feature_names_in_order": [
+      "heater_type_heat_pump",
+      "rated_power_kw",
+      "tank_capacity_l",
+      "minimum_comfort_temp_c",
+      "maximum_temp_c",
+      "temperature_band_c",
+      "recovery_rate_c_per_hour",
+      "baseline_duty_cycle",
+      "event_hour",
+      "event_weekday",
+      "flex_direction_reduce",
+      "pre_dispatch_temp_c",
+      "pre_dispatch_power_kw",
+      "directional_temperature_margin_c",
+      "directional_temperature_margin_fraction",
+      "potential_kw",
+      "prior_event_count",
+      "prior_response_ratio_mean",
+      "prior_response_ratio_ema",
+      "prior_response_ratio_std",
+      "prior_delivered_kw_mean",
+      "prior_availability_rate",
+      "prior_override_rate"
+    ],
+    "training_only_imputation_medians": {
+      "heater_type_heat_pump": 1.0,
+      "rated_power_kw": 4.478517,
+      "tank_capacity_l": 223.342,
+      "minimum_comfort_temp_c": 49.5295,
+      "maximum_temp_c": 58.918,
+      "temperature_band_c": 9.4435,
+      "recovery_rate_c_per_hour": 6.4155,
+      "baseline_duty_cycle": 0.25277,
+      "event_hour": 18.0,
+      "event_weekday": 3.0,
+      "flex_direction_reduce": 1.0,
+      "pre_dispatch_temp_c": 53.989,
+      "pre_dispatch_power_kw": 3.187621,
+      "directional_temperature_margin_c": 4.528,
+      "directional_temperature_margin_fraction": 0.489059,
+      "potential_kw": 3.598855,
+      "prior_event_count": 14.5,
+      "prior_response_ratio_mean": 0.421815,
+      "prior_response_ratio_ema": 0.4144715,
+      "prior_response_ratio_std": 0.370744,
+      "prior_delivered_kw_mean": 1.4977265,
+      "prior_availability_rate": 0.666667,
+      "prior_override_rate": 0.333333
+    }
+  },
+  "selected_baseline": {
+    "name": "heater_type_direction_mean",
+    "validation_all": {
+      "row_count": 3150,
+      "mae_ratio": 0.371462,
+      "rmse_ratio": 0.384849,
+      "bias_ratio": 0.001221,
+      "mae_kw": 1.325517,
+      "rmse_kw": 1.394465,
+      "bias_kw": 0.007794,
+      "overprediction_rate_percent": 54.412698,
+      "mean_expected_kw": 1.516852,
+      "mean_potential_kw": 3.57096,
+      "expected_to_potential_percent": 42.477429,
+      "prediction_bound_violations": 0
+    }
+  },
+  "candidate_validation": {
+    "all": {
+      "row_count": 3150,
+      "mae_ratio": 0.3369,
+      "rmse_ratio": 0.360231,
+      "bias_ratio": 0.003404,
+      "mae_kw": 1.202274,
+      "rmse_kw": 1.307257,
+      "bias_kw": 0.011767,
+      "overprediction_rate_percent": 53.619048,
+      "mean_expected_kw": 1.520825,
+      "expected_to_potential_percent": 42.588676,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "cold_start": {
+      "row_count": 105,
+      "mae_ratio": 0.340229,
+      "rmse_ratio": 0.361261,
+      "bias_ratio": 0.017499,
+      "mae_kw": 1.245047,
+      "rmse_kw": 1.343234,
+      "bias_kw": 0.052471,
+      "overprediction_rate_percent": 60.952381,
+      "mean_expected_kw": 1.374274,
+      "expected_to_potential_percent": 37.244552,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "with_history": {
+      "row_count": 3045,
+      "mae_ratio": 0.336785,
+      "rmse_ratio": 0.360196,
+      "bias_ratio": 0.002918,
+      "mae_kw": 1.200799,
+      "rmse_kw": 1.305999,
+      "bias_kw": 0.010363,
+      "overprediction_rate_percent": 53.366174,
+      "mean_expected_kw": 1.525878,
+      "expected_to_potential_percent": 42.779311,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "heat_pump": {
+      "row_count": 2160,
+      "mae_ratio": 0.333132,
+      "rmse_ratio": 0.356219,
+      "bias_ratio": -0.004091,
+      "mae_kw": 1.155902,
+      "rmse_kw": 1.253862,
+      "bias_kw": -0.016856,
+      "overprediction_rate_percent": 52.638889,
+      "mean_expected_kw": 1.476548,
+      "expected_to_potential_percent": 42.427877,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "electric_resistance": {
+      "row_count": 990,
+      "mae_ratio": 0.34512,
+      "rmse_ratio": 0.368833,
+      "bias_ratio": 0.019758,
+      "mae_kw": 1.303448,
+      "rmse_kw": 1.416788,
+      "bias_kw": 0.074216,
+      "overprediction_rate_percent": 55.757576,
+      "mean_expected_kw": 1.617428,
+      "expected_to_potential_percent": 42.912611,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "reduce": {
+      "row_count": 2444,
+      "mae_ratio": 0.334007,
+      "rmse_ratio": 0.357026,
+      "bias_ratio": 0.002878,
+      "mae_kw": 1.157559,
+      "rmse_kw": 1.258402,
+      "bias_kw": 0.008155,
+      "overprediction_rate_percent": 54.050736,
+      "mean_expected_kw": 1.449383,
+      "expected_to_potential_percent": 41.718758,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    },
+    "increase": {
+      "row_count": 706,
+      "mae_ratio": 0.346912,
+      "rmse_ratio": 0.371113,
+      "bias_ratio": 0.005225,
+      "mae_kw": 1.357065,
+      "rmse_kw": 1.463842,
+      "bias_kw": 0.024268,
+      "overprediction_rate_percent": 52.124646,
+      "mean_expected_kw": 1.76814,
+      "expected_to_potential_percent": 45.267187,
+      "raw_prediction_bound_violations": 0,
+      "prediction_bound_violations": 0
+    }
+  },
+  "improvement": {
+    "mae_ratio_percent_vs_selected_baseline": 9.304316,
+    "mae_kw_percent_vs_selected_baseline": 9.297731
+  },
+  "development_checks": {
+    "mae_ratio_beats_selected_baseline": true,
+    "mae_kw_beats_selected_baseline": true,
+    "bounded_predictions": true,
+    "test_outcomes_remained_unread": true
+  },
+  "next_stage": "calibrate trusted_kw using validation-only evidence",
+  "test_holdout": {
+    "status": "sealed",
+    "target_columns_read": false,
+    "allowed_use": "one final evaluation after model and safety policy are frozen"
+  },
+  "evidence": {
+    "training_table_canonical_sha256": "8e540e4732a4723d12bf3ba936aceaa4aac0c7966f0f10d2c33b5afaf1015e2e",
+    "baseline_report_canonical_sha256": "1ee319f2222965d7c9e9d2cde1b05535611fce26ea4501b2adf3ebcbff217e84"
+  },
+  "library_versions": {
+    "numpy": "2.5.1",
+    "scikit_learn": "1.9.1"
+  },
+  "limitations": [
+    "All water-heater response outcomes are synthetic.",
+    "Validation acceptance permits safety-calibration work only.",
+    "No trusted_kw policy has been calibrated and no release artifact is saved.",
+    "The final test split remains sealed."
+  ]
+}

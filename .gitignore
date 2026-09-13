@@ -1,0 +1,9 @@
+# Python bytecode & virtual environments
+__pycache__/
+*.pyc
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+.codex_tmp/
+*.db

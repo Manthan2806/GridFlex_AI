@@ -1,0 +1,125 @@
+{
+  "evaluation_version": "ev_baseline_evaluation_v1",
+  "scope": "Offline baseline evaluation on hybrid/synthetic EV behaviour; not real-world validation.",
+  "input": {
+    "path": "data/processed/ev_training/ev_training_examples.csv",
+    "sha256": "ad722fed3c80feea2fc6846bf2c185667f30f81a7a776a70f5de6ea5bf9e4e65",
+    "row_count": 21000,
+    "split_row_counts": {
+      "test": 3150,
+      "train": 14700,
+      "validation": 3150
+    },
+    "split_resource_counts": {
+      "test": 105,
+      "train": 490,
+      "validation": 105
+    }
+  },
+  "target": "target_delivery_ratio",
+  "global_train_mean_ratio": 0.594185,
+  "evaluation_split": "validation",
+  "baselines": {
+    "global_train_mean": {
+      "description": "Predict the average delivery ratio observed in training rows.",
+      "validation": {
+        "all": {
+          "row_count": 3150,
+          "mae_ratio": 0.18699,
+          "rmse_ratio": 0.26059,
+          "bias_ratio": 0.026819,
+          "mean_overestimation_ratio": 0.106905,
+          "mae_kw": 0.883084,
+          "rmse_kw": 1.625041,
+          "bias_kw": 0.018806,
+          "mean_overestimation_kw": 0.450945,
+          "prediction_bound_violations": 0
+        },
+        "cold_start": {
+          "row_count": 105,
+          "mae_ratio": 0.187725,
+          "rmse_ratio": 0.2637,
+          "bias_ratio": 0.033073,
+          "mean_overestimation_ratio": 0.110399,
+          "mae_kw": 0.77963,
+          "rmse_kw": 1.265661,
+          "bias_kw": -0.083608,
+          "mean_overestimation_kw": 0.348011,
+          "prediction_bound_violations": 0
+        },
+        "with_history": {
+          "row_count": 3045,
+          "mae_ratio": 0.186964,
+          "rmse_ratio": 0.260482,
+          "bias_ratio": 0.026604,
+          "mean_overestimation_ratio": 0.106784,
+          "mae_kw": 0.886652,
+          "rmse_kw": 1.636026,
+          "bias_kw": 0.022338,
+          "mean_overestimation_kw": 0.454495,
+          "prediction_bound_violations": 0
+        }
+      }
+    },
+    "rolling_history": {
+      "description": "Predict each EV's prior mean delivery ratio; use the training average for cold-start rows.",
+      "validation": {
+        "all": {
+          "row_count": 3150,
+          "mae_ratio": 0.162777,
+          "rmse_ratio": 0.232801,
+          "bias_ratio": -7e-05,
+          "mean_overestimation_ratio": 0.081353,
+          "mae_kw": 0.740847,
+          "rmse_kw": 1.514887,
+          "bias_kw": 0.032364,
+          "mean_overestimation_kw": 0.386606,
+          "prediction_bound_violations": 0
+        },
+        "cold_start": {
+          "row_count": 105,
+          "mae_ratio": 0.187725,
+          "rmse_ratio": 0.2637,
+          "bias_ratio": 0.033073,
+          "mean_overestimation_ratio": 0.110399,
+          "mae_kw": 0.77963,
+          "rmse_kw": 1.265661,
+          "bias_kw": -0.083608,
+          "mean_overestimation_kw": 0.348011,
+          "prediction_bound_violations": 0
+        },
+        "with_history": {
+          "row_count": 3045,
+          "mae_ratio": 0.161917,
+          "rmse_ratio": 0.231662,
+          "bias_ratio": -0.001213,
+          "mean_overestimation_ratio": 0.080352,
+          "mae_kw": 0.73951,
+          "rmse_kw": 1.522753,
+          "bias_kw": 0.036363,
+          "mean_overestimation_kw": 0.387937,
+          "prediction_bound_violations": 0
+        }
+      }
+    }
+  },
+  "validation_comparison": {
+    "selected_baseline": "rolling_history",
+    "mae_ratio_improvement_percent_vs_global": 12.948821
+  },
+  "test_holdout": {
+    "status": "sealed",
+    "row_count": 3150,
+    "resource_count": 105,
+    "target_columns_read": false,
+    "reason": "Test outcomes are reserved for the final selected ML model comparison."
+  },
+  "leakage_boundary": {
+    "prediction_inputs": [
+      "global_train_mean_ratio",
+      "prior_delivery_ratio_mean for the same EV from earlier events only"
+    ],
+    "current_outcome_columns_are_inputs": false,
+    "target_dispatched_kw_usage": "Used only after ratio prediction to express evaluation error in kW; never used to choose the predicted ratio."
+  }
+}

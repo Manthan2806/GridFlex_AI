@@ -1,0 +1,479 @@
+"""Build 700 GridFlex EVs from real ACN sessions plus explicit synthetic fields."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import gzip
+import hashlib
+import http.client
+import io
+import json
+import math
+import random
+import statistics
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+
+ACN_REPOSITORY = "tongxin-li/ACN-Data-Static"
+ACN_COMMIT = "abb7cf15cc7108913e965d4375cc7270d532b65f"
+GENERATOR_VERSION = "gridflex-acn-hybrid-ev-v2"
+DEFAULT_SEED = 2806
+DEFAULT_RESOURCE_COUNT = 700
+DEFAULT_HISTORY_PER_RESOURCE = 30
+IST = timezone(timedelta(hours=5, minutes=30))
+SCENARIO_DATE = datetime(2026, 1, 15, tzinfo=IST)
+
+
+@dataclass(frozen=True)
+class Config:
+    seed: int = DEFAULT_SEED
+    resource_count: int = DEFAULT_RESOURCE_COUNT
+    history_per_resource: int = DEFAULT_HISTORY_PER_RESOURCE
+    generator_version: str = GENERATOR_VERSION
+
+
+def _request_bytes(url: str, *, timeout: int, attempts: int = 5) -> bytes:
+    """Download with bounded retries for interrupted GitHub chunked responses."""
+    if attempts < 1:
+        raise ValueError("attempts must be at least one")
+    request = urllib.request.Request(url, headers={"User-Agent": "GridFlex-AI"})
+    retryable = (
+        http.client.IncompleteRead,
+        TimeoutError,
+        ConnectionError,
+        json.JSONDecodeError,
+        urllib.error.URLError,
+    )
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.read()
+        except retryable:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(2**attempt)
+    raise AssertionError("retry loop exited unexpectedly")
+
+
+def _request_json(url: str) -> dict:
+    payload = _request_bytes(url, timeout=60)
+    return json.loads(payload.decode("utf-8"))
+
+
+def _tree(sha: str) -> list[dict]:
+    url = f"https://api.github.com/repos/{ACN_REPOSITORY}/git/trees/{sha}"
+    return _request_json(url)["tree"]
+
+
+def _entry(entries: list[dict], name: str) -> dict:
+    return next(item for item in entries if item["path"] == name)
+
+
+def _list_session_files() -> list[str]:
+    root = _tree(ACN_COMMIT)
+    time_series = _entry(root, "time series data")
+    paths: list[str] = []
+    for site in _tree(time_series["sha"]):
+        if site["type"] != "tree":
+            continue
+        for garage in _tree(site["sha"]):
+            if garage["type"] != "tree":
+                continue
+            for item in _tree(garage["sha"]):
+                if item["type"] == "blob" and item["path"].endswith(".csv.gz"):
+                    paths.append(
+                        f"time series data/{site['path']}/{garage['path']}/{item['path']}"
+                    )
+    return paths
+
+
+def _number(value: object) -> float | None:
+    try:
+        result = float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return result
+
+
+def _download_summary(path: str) -> dict[str, object]:
+    encoded = urllib.parse.quote(path, safe="/")
+    url = (
+        f"https://raw.githubusercontent.com/{ACN_REPOSITORY}/"
+        f"{ACN_COMMIT}/{encoded}"
+    )
+    compressed = _request_bytes(url, timeout=90)
+    text = gzip.decompress(compressed).decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    if not rows or not reader.fieldnames:
+        raise ValueError(f"ACN session has no data: {path}")
+
+    def find_column(fragment: str) -> str:
+        for field in reader.fieldnames or ():
+            if fragment in field.lower():
+                return field
+        raise ValueError(f"Missing {fragment!r} column in {path}")
+
+    timestamp_column = reader.fieldnames[0]
+    energy_column = find_column("energy delivered")
+    power_column = find_column("power")
+    pilot_column = find_column("pilot")
+    powers = [value for row in rows if (value := _number(row[power_column])) is not None]
+    pilots = [value for row in rows if (value := _number(row[pilot_column])) is not None]
+    energies = [value for row in rows if (value := _number(row[energy_column])) is not None]
+    if not powers or not energies:
+        raise ValueError(f"ACN session lacks usable power/energy values: {path}")
+    parts = path.split("/")
+    return {
+        "source_session_path": path,
+        "site": parts[1],
+        "garage": parts[2],
+        "connection_time": rows[0][timestamp_column],
+        "disconnect_time": rows[-1][timestamp_column],
+        "energy_delivered_kwh": round(max(energies), 5),
+        "maximum_observed_power_kw": round(max(powers), 5),
+        "maximum_pilot_a": round(max(pilots), 5) if pilots else "",
+        "source_compressed_bytes": len(compressed),
+    }
+
+
+def _safe_download_summary(path: str) -> dict[str, object] | None:
+    """Return None for unusable/corrupt source sessions so they are excluded."""
+    try:
+        return _download_summary(path)
+    except (OSError, UnicodeError, ValueError, urllib.error.URLError):
+        return None
+
+
+def _parse_acn_time(value: str) -> datetime:
+    normalized = value.strip().replace("Z", "+00:00")
+    parsed = datetime.fromisoformat(normalized)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(IST)
+
+
+def _scenario_window(summary: dict[str, object]) -> tuple[datetime, datetime]:
+    start = _parse_acn_time(str(summary["connection_time"]))
+    end = _parse_acn_time(str(summary["disconnect_time"]))
+    source_duration = max(timedelta(minutes=15), end - start)
+    complete_blocks = max(1, int(source_duration.total_seconds() // (15 * 60)))
+    scenario_start = SCENARIO_DATE.replace(
+        hour=start.hour,
+        minute=(start.minute // 15) * 15,
+        second=0,
+        microsecond=0,
+    )
+    return scenario_start, scenario_start + timedelta(minutes=15 * complete_blocks)
+
+
+def _floor_decimal(value: float, places: int) -> float:
+    """Round down so a stored limit never exceeds physical capacity."""
+    factor = 10**places
+    return math.floor(value * factor + 1e-9) / factor
+
+
+def _split(index: int, total: int) -> str:
+    fraction = index / total
+    return "train" if fraction < 0.70 else "validation" if fraction < 0.85 else "test"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _cached_source_summaries(
+    source_path: Path, metadata_path: Path, required_count: int, seed: int
+) -> tuple[list[dict[str, object]], dict[str, object]] | None:
+    """Load the pinned ACN summaries already captured by an earlier run."""
+    if not source_path.exists() or not metadata_path.exists():
+        return None
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if metadata.get("source_commit_reference") != ACN_COMMIT:
+        return None
+    if int(metadata.get("seed", -1)) != seed:
+        return None
+    with source_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) < required_count:
+        return None
+    summaries = [
+        {key: value for key, value in row.items() if key != "resource_id"}
+        for row in rows[:required_count]
+    ]
+    return summaries, metadata
+
+
+def _excluded_source_paths(path: Path | None) -> frozenset[str]:
+    """Load ACN source-session paths that must not appear in a new dataset."""
+    if path is None:
+        return frozenset()
+    if not path.is_file():
+        raise FileNotFoundError(f"excluded-source CSV does not exist: {path}")
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if "source_session_path" not in (reader.fieldnames or ()):
+            raise ValueError("excluded-source CSV is missing source_session_path")
+        values = {
+            row["source_session_path"].strip()
+            for row in reader
+            if row.get("source_session_path", "").strip()
+        }
+    if not values:
+        raise ValueError("excluded-source CSV contains no source sessions")
+    return frozenset(values)
+
+
+def generate(
+    config: Config,
+    output_root: Path,
+    *,
+    excluded_sources: frozenset[str] = frozenset(),
+) -> dict[str, object]:
+    source_dir = output_root / "source_samples"
+    ev_dir = output_root / "ev"
+    behaviour_dir = output_root / "behavior"
+    for directory in (source_dir, ev_dir, behaviour_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    source_path = source_dir / "acn_session_summaries.csv"
+    resource_path = ev_dir / "ev_resources.csv"
+    behaviour_path = behaviour_dir / "ev_historical_response.csv"
+    metadata_path = output_root / "ev_dataset_metadata.json"
+
+    rng = random.Random(config.seed)
+    cached = _cached_source_summaries(
+        source_path, metadata_path, config.resource_count, config.seed
+    )
+    if cached is not None and any(
+        str(row["source_session_path"]) in excluded_sources for row in cached[0]
+    ):
+        cached = None
+    reused_source_summaries = cached is not None
+    if cached is not None:
+        summaries, previous_metadata = cached
+        available_session_count = int(
+            previous_metadata.get("available_acn_sessions", len(summaries))
+        )
+        examined_count = int(
+            previous_metadata.get("candidate_sessions_examined", len(summaries))
+        )
+    else:
+        all_paths = [
+            path for path in sorted(_list_session_files()) if path not in excluded_sources
+        ]
+        if len(all_paths) < config.resource_count:
+            raise ValueError("ACN archive contains fewer sessions than requested")
+        candidate_paths = list(all_paths)
+        selection_rng = random.Random(config.seed)
+        selection_rng.shuffle(candidate_paths)
+        summaries = []
+        examined_count = 0
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            for offset in range(0, len(candidate_paths), 1_000):
+                batch = candidate_paths[offset : offset + 1_000]
+                examined_count += len(batch)
+                valid = executor.map(_safe_download_summary, batch)
+                summaries.extend(item for item in valid if item is not None)
+                if len(summaries) >= config.resource_count:
+                    break
+        summaries = summaries[: config.resource_count]
+        if len(summaries) < config.resource_count:
+            raise ValueError("Could not obtain enough valid ACN sessions")
+        available_session_count = len(all_paths)
+
+    source_rows: list[dict[str, object]] = []
+    resource_rows: list[dict[str, object]] = []
+    behaviour_rows: list[dict[str, object]] = []
+
+    for index, summary in enumerate(summaries):
+        resource_id = f"ev_{index + 1:04d}"
+        dataset_split = _split(index, config.resource_count)
+        summary = {**summary, "resource_id": resource_id}
+        source_rows.append(summary)
+        start, end = _scenario_window(summary)
+        duration_hours = max(0.25, (end - start).total_seconds() / 3600)
+        observed_max = max(1.4, float(summary["maximum_observed_power_kw"]))
+        rated_power_kw = min(22.0, round(observed_max, 2))
+        delivered_kwh = float(summary["energy_delivered_kwh"])
+
+        # ACN does not expose battery capacity or SOC; these fields are synthetic.
+        battery_capacity_kwh = round(rng.uniform(max(35.0, delivered_kwh * 1.4), 100.0), 2)
+        maximum_kwh = _floor_decimal(
+            min(battery_capacity_kwh, rated_power_kw * duration_hours), 3
+        )
+        required_kwh = min(round(max(0.01, delivered_kwh), 3), maximum_kwh)
+        soc_gain = 100.0 * required_kwh / battery_capacity_kwh
+        arrival_soc_pct = round(
+            rng.uniform(10.0, max(11.0, 90.0 - soc_gain)), 3
+        )
+        target_soc_pct = round(min(100.0, arrival_soc_pct + soc_gain), 3)
+
+        # Priors are synthetic because ACN has no explicit override/failure labels.
+        assumed_availability = rng.uniform(0.86, 0.99)
+        assumed_override = rng.uniform(0.02, 0.22)
+        baseline_ratio = min(1.0, delivered_kwh / max(0.001, rated_power_kw * duration_hours))
+        baseline_ratio = max(0.55, baseline_ratio)
+
+        resource_rows.append(
+            {
+                "id": resource_id,
+                "type": "ev",
+                "location_id": f"simulation_feeder_{index % 10 + 1:02d}",
+                "rated_power_kw": rated_power_kw,
+                "earliest_start": start.isoformat(),
+                "latest_end": end.isoformat(),
+                "required_kwh": required_kwh,
+                "minimum_kwh": round(required_kwh * 0.8, 3),
+                "maximum_kwh": maximum_kwh,
+                "minimum_duration": 15,
+                "maximum_duration": max(15, int(duration_hours * 60)),
+                "deadline": end.isoformat(),
+                "min_power": min(1.4, rated_power_kw),
+                "max_power": rated_power_kw,
+                "override_rate": round(assumed_override, 4),
+                "availability_rate": round(assumed_availability, 4),
+                "state": "available",
+                "battery_capacity_kwh": battery_capacity_kwh,
+                "arrival_soc_pct": arrival_soc_pct,
+                "target_soc_pct": target_soc_pct,
+                "dataset_split": dataset_split,
+                "acn_source_session": summary["source_session_path"],
+            }
+        )
+
+        for history_index in range(config.history_per_resource):
+            timestamp = start - timedelta(days=config.history_per_resource - history_index)
+            dispatched_kw = round(rng.uniform(0.4, 1.0) * rated_power_kw, 3)
+            is_available = rng.random() < assumed_availability
+            has_override = is_available and rng.random() < assumed_override
+            if not is_available:
+                delivered = 0.0
+            else:
+                ratio = min(1.0, max(0.0, rng.gauss(baseline_ratio, 0.06)))
+                if has_override:
+                    ratio *= rng.uniform(0.15, 0.70)
+                delivered = round(dispatched_kw * ratio, 3)
+            behaviour_rows.append(
+                {
+                    "resource_id": resource_id,
+                    "timestamp": timestamp.isoformat(),
+                    "dispatched_kw": dispatched_kw,
+                    "delivered_kw": delivered,
+                    "is_available": str(is_available).lower(),
+                    "has_override": str(has_override).lower(),
+                    "dataset_split": dataset_split,
+                    "provenance": "synthetic outcome calibrated from linked ACN session",
+                }
+            )
+
+    def write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+        with path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=tuple(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+
+    write_csv(source_path, source_rows)
+    write_csv(resource_path, resource_rows)
+    write_csv(behaviour_path, behaviour_rows)
+    files = {}
+    for path, classification in (
+        (source_path, "COMPUTED summary of REAL/PUBLIC ACN data"),
+        (resource_path, "HYBRID: ACN-derived + SYNTHETIC"),
+        (behaviour_path, "SYNTHETIC, calibrated from linked ACN session"),
+    ):
+        files[str(path.relative_to(output_root))] = {
+            "rows": sum(1 for _ in path.open(encoding="utf-8")) - 1,
+            "sha256": _sha256(path),
+            "classification": classification,
+        }
+
+    metadata = {
+        **asdict(config),
+        "source": "ACN-Data Static",
+        "source_url": f"https://github.com/{ACN_REPOSITORY}",
+        "source_commit_reference": ACN_COMMIT,
+        "available_acn_sessions": available_session_count,
+        "sampled_acn_sessions": len(summaries),
+        "candidate_sessions_examined": examined_count,
+        "reused_pinned_source_summaries": reused_source_summaries,
+        "sample_method": "sorted paths then seeded random sample without replacement",
+        "excluded_source_session_count": len(excluded_sources),
+        "source_disjointness_rule": (
+            "All listed excluded ACN source sessions were removed before sampling."
+            if excluded_sources
+            else "No source-session exclusion list was supplied."
+        ),
+        "geographic_scope": "ACN US workplace sites; GridFlex locations are synthetic",
+        "scenario_date": SCENARIO_DATE.isoformat(),
+        "time_grid_minutes": 15,
+        "session_alignment": (
+            "Start times are rounded down to a quarter hour. End times retain only "
+            "complete 15-minute blocks within the ACN-derived connection duration."
+        ),
+        "energy_feasibility_rule": (
+            "maximum_kwh and required_kwh never exceed rated power multiplied by "
+            "the aligned connection duration"
+        ),
+        "split_rule": "resource-level 70/15/15",
+        "files": files,
+        "field_provenance": {
+            "ACN-derived": [
+                "arrival/departure pattern",
+                "delivered energy",
+                "observed charging power",
+                "source site and session",
+            ],
+            "synthetic": [
+                "battery capacity",
+                "arrival/target SOC",
+                "override and availability priors",
+                "historical outcomes",
+                "GridFlex location and state",
+            ],
+        },
+        "limitations": [
+            "ACN observations are US workplace charging sessions, not Indian residential EV data.",
+            "One sampled ACN session anchors each virtual EV; it is not a persistent real vehicle identity.",
+            "Overrides, failures, battery capacity, SOC, and repeated history are synthetic.",
+            "Partial connection time below one complete 15-minute block is not represented.",
+        ],
+    }
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    return metadata
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-root", type=Path, required=True)
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--resource-count", type=int, default=DEFAULT_RESOURCE_COUNT)
+    parser.add_argument("--history-per-resource", type=int, default=DEFAULT_HISTORY_PER_RESOURCE)
+    parser.add_argument(
+        "--exclude-sources",
+        type=Path,
+        help="CSV containing source_session_path values that must not be sampled",
+    )
+    args = parser.parse_args()
+    result = generate(
+        Config(args.seed, args.resource_count, args.history_per_resource),
+        args.output_root,
+        excluded_sources=_excluded_source_paths(args.exclude_sources),
+    )
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

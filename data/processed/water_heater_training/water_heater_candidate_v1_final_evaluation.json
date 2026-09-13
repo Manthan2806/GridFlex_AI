@@ -1,0 +1,116 @@
+{
+  "candidate_version": "water_heater_candidate_v1",
+  "evaluation_status": "final_resource_disjoint_test_evaluated_once",
+  "decision": "accepted_for_hackathon_prototype",
+  "deployment_allowed": false,
+  "prototype_allowed": true,
+  "holdout": {
+    "rows": 3150,
+    "resources": 105,
+    "training_resource_overlap": 0,
+    "training_table_canonical_sha256": "8e540e4732a4723d12bf3ba936aceaa4aac0c7966f0f10d2c33b5afaf1015e2e"
+  },
+  "baseline_metrics": {
+    "row_count": 3150,
+    "mae_ratio": 0.368521,
+    "rmse_ratio": 0.382059,
+    "bias_ratio": 0.010015,
+    "mae_kw": 1.331304,
+    "rmse_kw": 1.404662,
+    "bias_kw": 0.040424,
+    "overprediction_rate_percent": 55.460317
+  },
+  "expected_metrics": {
+    "row_count": 3150,
+    "mae_ratio": 0.335084,
+    "rmse_ratio": 0.359123,
+    "bias_ratio": 0.010526,
+    "mae_kw": 1.210335,
+    "rmse_kw": 1.319343,
+    "bias_kw": 0.038521,
+    "overprediction_rate_percent": 54.571429
+  },
+  "trusted_metrics": {
+    "row_count": 3150,
+    "mae_ratio": 0.393022,
+    "rmse_ratio": 0.545219,
+    "bias_ratio": -0.390895,
+    "mae_kw": 1.417575,
+    "rmse_kw": 2.001509,
+    "bias_kw": -1.409811,
+    "overprediction_rate_percent": 9.777778
+  },
+  "safety": {
+    "groups": {
+      "all": {
+        "row_count": 3150,
+        "overprediction_rate_percent": 9.777778,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "heat_pump": {
+        "row_count": 2100,
+        "overprediction_rate_percent": 9.285714,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "electric_resistance": {
+        "row_count": 1050,
+        "overprediction_rate_percent": 10.761905,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "reduce": {
+        "row_count": 2485,
+        "overprediction_rate_percent": 9.899396,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "increase": {
+        "row_count": 665,
+        "overprediction_rate_percent": 9.323308,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "small": {
+        "row_count": 1061,
+        "overprediction_rate_percent": 9.519321,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "medium": {
+        "row_count": 972,
+        "overprediction_rate_percent": 9.670782,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      },
+      "large": {
+        "row_count": 1117,
+        "overprediction_rate_percent": 10.116383,
+        "maximum_allowed_percent": 15.0,
+        "passes": true
+      }
+    },
+    "trusted_kw_retained_percent": 5.21966,
+    "retention_is_acceptance_gate": false
+  },
+  "acceptance_checks": {
+    "expected_mae_ratio_beats_baseline": true,
+    "expected_mae_kw_beats_baseline": true,
+    "all_predeclared_safety_groups_pass": true,
+    "trusted_never_exceeds_expected": true,
+    "predictions_are_bounded": true,
+    "trusted_power_is_nonzero": true
+  },
+  "limitations": [
+    "Every response outcome is synthetic; these metrics are not field evidence.",
+    "The split is resource-disjoint but produced by the same synthetic generator.",
+    "The trusted estimate is intentionally very conservative.",
+    "Acceptance permits a hackathon/MVP prototype only, not real autonomous dispatch."
+  ],
+  "model_artifact": {
+    "saved": true,
+    "path": "ai_ml/water_heater_model/artifacts/water_heater_candidate_v1_demo_bundle.joblib",
+    "sha256": "11dd2494cd52b4152b756ee6098ab416f16fc33a5f3969765524931f1a2fe0d5"
+  }
+}

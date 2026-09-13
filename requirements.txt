@@ -1,0 +1,7 @@
+pydantic==2.13.5
+numpy==2.5.3
+scikit-learn==1.9.1
+joblib>=1.4,<2
+fastapi>=0.115,<1
+sqlalchemy>=2,<3
+uvicorn[standard]>=0.30,<1
