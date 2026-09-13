@@ -103,6 +103,10 @@ from backend.app.domain.models import FlexibilityResource
 from backend.app.schemas.runs import SimulationInput
 from backend.app.services.dispatch_service import MVPOptimizer
 from backend.app.services.trust_hydration import build_optimizer_context, hydrate_trust_context
+
+from backend.app.services.verification_service import SimulationVerifier
+from experiments.runner import ExperimentRunner, ExperimentComparison
+
 from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
 from simulation.adapter import SimulationAdapter
 
@@ -315,3 +319,34 @@ def simulate_full():
         session.commit()
     
     return json.loads(results_json)
+
+
+@app.post("/experiments/run", response_model=ExperimentComparison)
+def run_experiment():
+    start = datetime.now(timezone.utc)
+    latest_end = start + timedelta(hours=4)
+    resources = _get_canonical_resources(start, latest_end)
+        
+    scenario = Scenario(
+        scenario_id="experiment-canonical",
+        resources=resources,
+        disruption_specs={},
+        seeds={}
+    )
+    
+    client = ExperimentalEVModelClient(demo_mode=True)
+    ctx = build_optimizer_context(client, resources, start)
+    
+    optimizer = MVPOptimizer()
+    adapter = SimulationAdapter()
+    verifier = SimulationVerifier()
+    
+    runner = ExperimentRunner(strategy=optimizer, verifier=verifier, adapter=adapter)
+    
+    comparison = runner.run_paired_experiment(
+        scenario=scenario,
+        renewable_demand_forecasts=[],
+        context=ctx
+    )
+    
+    return comparison

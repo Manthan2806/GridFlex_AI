@@ -190,3 +190,8 @@ def test_simulate_route_exists():
     routes = [route.path for route in app.routes]
     assert "/simulate" in routes
     assert "/simulate/full" in routes
+
+def test_experiments_run_route_exists():
+    from backend.app.main import app
+    routes = [route.path for route in app.routes]
+    assert "/experiments/run" in routes

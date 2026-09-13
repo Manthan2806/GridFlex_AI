@@ -36,9 +36,9 @@ function FeasibilityBadge({ feasibility }: { feasibility: FeasibilityStatus }) {
   )
 }
 
-function StepVisualization({ step, feederCapacityKw }: { step: HorizonStep; feederCapacityKw: number }) {
-  const utilizationPct = feederCapacityKw > 0 ? (step.totalDispatchedKw / feederCapacityKw) * 100 : 0
-  const isOverCapacity = step.totalDispatchedKw > feederCapacityKw
+function StepVisualization({ step, feederCapacityKw }: { step: HorizonStep; feederCapacityKw?: number }) {
+  const utilizationPct = (feederCapacityKw && feederCapacityKw > 0) ? (step.totalDispatchedKw / feederCapacityKw) * 100 : 0
+  const isOverCapacity = (feederCapacityKw !== undefined) ? step.totalDispatchedKw > feederCapacityKw : false
 
   return (
     <div
@@ -170,9 +170,9 @@ function ExperimentComparison({ comparison }: { comparison: HorizonSimulationRes
           </tr>
         </thead>
         <tbody>
-          {metrics.map((m) => {
-            const b = m.baseline ?? "—"
-            const t = m.trustAware ?? "—"
+          {metrics.filter(m => m.baseline !== undefined || m.trustAware !== undefined).map((m) => {
+            const b = m.baseline ?? "N/A"
+            const t = m.trustAware ?? "N/A"
             const delta = (m.baseline !== undefined && m.trustAware !== undefined) ? m.trustAware - m.baseline : undefined
             return (
               <tr key={m.key} style={{ borderBottom: "1px solid var(--color-border-secondary, #f3f4f6)" }}>
@@ -221,7 +221,7 @@ export default function ExperimentsPage() {
             fontWeight: "500",
           }}
         >
-          {uiState.simulationRunning ? "Running Simulation..." : "Run Horizon Simulation (POST /simulate/full)"}
+          {uiState.simulationRunning ? "Running Simulation..." : "Run Experiment (POST /experiments/run)"}
         </button>
       </div>
 
@@ -259,11 +259,11 @@ export default function ExperimentsPage() {
 
           {activeTab === "feasibility" && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1rem" }}>
-              <MetricDisplay label="Feeder Capacity (kW)" value={simulationResult.feederCapacityKw} />
-              <MetricDisplay label="Total Trusted (kW)" value={simulationResult.totalTrustedKw} />
-              <MetricDisplay label="Total Dispatched (kW)" value={simulationResult.totalDispatchedKw} />
-              <MetricDisplay label="Total Delivered (kW)" value={simulationResult.totalDeliveredKw} />
-              <MetricDisplay label="Total Error (kW)" value={simulationResult.totalErrorKw} />
+              {simulationResult.feederCapacityKw !== undefined && <MetricDisplay label="Feeder Capacity (kW)" value={simulationResult.feederCapacityKw} />}
+              {simulationResult.totalTrustedKw !== undefined && <MetricDisplay label="Total Trusted (kW)" value={simulationResult.totalTrustedKw} />}
+              {simulationResult.totalDispatchedKw !== undefined && <MetricDisplay label="Total Dispatched (kW)" value={simulationResult.totalDispatchedKw} />}
+              {simulationResult.totalDeliveredKw !== undefined && <MetricDisplay label="Total Delivered (kW)" value={simulationResult.totalDeliveredKw} />}
+              {simulationResult.totalErrorKw !== undefined && <MetricDisplay label="Total Error (kW)" value={simulationResult.totalErrorKw} />}
               <MetricDisplay label="Steps" value={simulationResult.steps.length} />
             </div>
           )}

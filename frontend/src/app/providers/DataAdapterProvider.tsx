@@ -137,8 +137,51 @@ async function createRealAdapter(): Promise<DataAdapter> {
     },
     async runFullHorizonSimulation() {
       try {
-        return await fetchJson<import("../../data/types/domain/experiment").HorizonSimulationResult>("/simulate/full", { method: "POST" })
-      } catch {
+        const res = await fetchJson<any>("/experiments/run", { method: "POST" })
+        
+        // Map backend VerificationResult to frontend ExperimentComparison format
+        const mapResult = (vr: any) => {
+          if (!vr) return null;
+          return {
+            flexibilityDeliveryErrorKw: vr.delivered_flexibility_error || 0,
+            overcommitmentKw: vr.overcommitment || 0,
+            renewableAbsorptionKwh: vr.renewable_absorption ?? undefined,
+            constraintViolations: vr.constraint_violation_count || 0,
+            deadlineViolations: vr.deadline_violation_count || 0,
+            reboundKwh: vr.rebound ?? undefined,
+            // Fallbacks for missing fields in backend VerificationResult
+            committedFlexibilityKw: undefined,
+            actualFlexibilityKw: undefined, 
+            actualCommittedReliability: vr.reliability || 0
+          }
+        };
+
+        const comparison = {
+          baseline: mapResult(res.baseline_result),
+          trustAware: mapResult(res.trust_aware_result)
+        };
+
+        // We wrap it in a mock-like structure if the backend only returns comparison
+        return {
+          id: res.scenario_id || "sim-exp",
+          feasibility: res.baseline_plan_status === "FEASIBLE" || res.trust_aware_plan_status === "FEASIBLE" ? "FEASIBLE" : "INFEASIBLE",
+          steps: [],
+          instructionMatrix: [],
+          comparison: comparison,
+          trustUpdates: [],
+          runId: "run-" + (res.experiment_seed || "0"),
+          executionTimestamp: new Date().toISOString(),
+          feederCapacityKw: undefined,
+          totalTrustedKw: undefined,
+          totalDispatchedKw: undefined,
+          totalDeliveredKw: undefined,
+          totalErrorKw: undefined
+        } as import("../../data/types/domain/experiment").HorizonSimulationResult;
+
+      } catch (err) {
+        if (import.meta.env.VITE_MOCK_MODE === "false") {
+          throw err;
+        }
         return new MockExperimentAdapter().runFullHorizonSimulation()
       }
     },

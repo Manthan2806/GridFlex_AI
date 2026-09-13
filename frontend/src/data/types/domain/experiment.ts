@@ -32,23 +32,23 @@ export interface ExperimentComparison {
   readonly baseline: {
     flexibilityDeliveryErrorKw: number
     overcommitmentKw: number
-    renewableAbsorptionKwh: number
+    renewableAbsorptionKwh?: number
     constraintViolations: number
     deadlineViolations: number
-    reboundKwh: number
-    committedFlexibilityKw: number
-    actualFlexibilityKw: number
+    reboundKwh?: number
+    committedFlexibilityKw?: number
+    actualFlexibilityKw?: number
     actualCommittedReliability: number
   } | null
   readonly trustAware: {
     flexibilityDeliveryErrorKw: number
     overcommitmentKw: number
-    renewableAbsorptionKwh: number
+    renewableAbsorptionKwh?: number
     constraintViolations: number
     deadlineViolations: number
-    reboundKwh: number
-    committedFlexibilityKw: number
-    actualFlexibilityKw: number
+    reboundKwh?: number
+    committedFlexibilityKw?: number
+    actualFlexibilityKw?: number
     actualCommittedReliability: number
   } | null
 }
@@ -63,11 +63,11 @@ export interface HorizonSimulationResult {
   readonly trustUpdates: TrustUpdate[]
   readonly runId: string
   readonly executionTimestamp: string
-  readonly feederCapacityKw: number
-  readonly totalTrustedKw: number
-  readonly totalDispatchedKw: number
-  readonly totalDeliveredKw: number
-  readonly totalErrorKw: number
+  readonly feederCapacityKw?: number
+  readonly totalTrustedKw?: number
+  readonly totalDispatchedKw?: number
+  readonly totalDeliveredKw?: number
+  readonly totalErrorKw?: number
 }
 
 export interface TrustUpdate {
