@@ -43,7 +43,10 @@ async function createRealAdapter(): Promise<DataAdapter> {
     async getFlexibilityResources() {
       try {
         return await fetchJson<import("../../data/types/domain").FlexibilityResource[]>("/resources")
-      } catch {
+      } catch (err) {
+        if (import.meta.env.VITE_MOCK_MODE === "false") {
+          throw err
+        }
         return new MockResourcesAdapter().getFlexibilityResources()
       }
     },

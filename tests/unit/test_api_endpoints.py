@@ -67,3 +67,32 @@ def test_simulate_full_uses_canonical_stack(
     assert added_run.total_delivered_kw == 0.0
     # Ensure feeder_capacity_kw is not present
     assert not hasattr(added_run, "feeder_capacity_kw")
+
+from backend.app.main import get_resources
+from backend.app.domain.models import TrustState
+
+@patch("backend.app.main.ExperimentalEVModelClient", create=True)
+@patch("backend.app.main.hydrate_trust_context", create=True)
+def test_get_resources_canonical(mock_hydrate, mock_ev_client_cls):
+    # Mock trust data returned by AI/ML client
+    mock_hydrate.return_value = {
+        "ev-1": TrustState(potential_kw=7.4, expected_kw=7.4, trusted_kw=7.4, confidence=1.0),
+        "ev-2": TrustState(potential_kw=11.0, expected_kw=11.0, trusted_kw=11.0, confidence=1.0),
+        "ev-3": TrustState(potential_kw=3.7, expected_kw=3.7, trusted_kw=3.7, confidence=1.0),
+    }
+
+    response = get_resources()
+
+    assert isinstance(response, list)
+    assert len(response) == 3
+
+    # Verify canonical models mapped cleanly without feeder_capacity_kw
+    for res in response:
+        assert not hasattr(res, "feeder_capacity_kw")
+        assert res.state == "available"
+        assert res.type == "ev"
+        assert res.potential_kw is not None
+        assert res.confidence == 1.0
+
+    mock_ev_client_cls.assert_called_once_with(demo_mode=True)
+    mock_hydrate.assert_called_once()

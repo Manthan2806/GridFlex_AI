@@ -96,19 +96,24 @@ def get_run(run_id: str) -> dict:
 
 
 from datetime import datetime, timedelta, timezone
+from typing import List
 from backend.app.schemas.scenarios import Scenario
-from backend.app.domain.enums import ResourceType
+from backend.app.domain.enums import ResourceType, ResourceState
 from backend.app.domain.models import FlexibilityResource
 from backend.app.schemas.runs import SimulationInput
 from backend.app.services.dispatch_service import MVPOptimizer
-from backend.app.services.trust_hydration import build_optimizer_context
+from backend.app.services.trust_hydration import build_optimizer_context, hydrate_trust_context
 from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
 from simulation.adapter import SimulationAdapter
 
-@app.post("/simulate/full")
-def simulate_full():
-    start = datetime.now(timezone.utc)
-    latest_end = start + timedelta(hours=4)
+class ResourceResponse(FlexibilityResource):
+    potential_kw: float
+    expected_kw: float
+    trusted_kw: float
+    confidence: float
+    state: ResourceState
+
+def _get_canonical_resources(start: datetime, latest_end: datetime) -> List[FlexibilityResource]:
     resources = []
     for ev in SEED_EVS:
         resources.append(
@@ -132,6 +137,37 @@ def simulate_full():
                 availability_rate=ev["availability_rate"],
             )
         )
+    return resources
+
+@app.get("/resources", response_model=List[ResourceResponse])
+def get_resources():
+    start = datetime.now(timezone.utc)
+    latest_end = start + timedelta(hours=4)
+    resources = _get_canonical_resources(start, latest_end)
+    
+    client = ExperimentalEVModelClient(demo_mode=True)
+    trust_data = hydrate_trust_context(client, resources, start)
+    
+    response_list = []
+    for res in resources:
+        trust = trust_data[res.id]
+        res_dict = res.model_dump()
+        res_dict.update({
+            "potential_kw": rounded(trust.potential_kw),
+            "expected_kw": rounded(trust.expected_kw),
+            "trusted_kw": rounded(trust.trusted_kw),
+            "confidence": rounded(trust.confidence),
+            "state": ResourceState.AVAILABLE
+        })
+        response_list.append(ResourceResponse(**res_dict))
+    
+    return response_list
+
+@app.post("/simulate/full")
+def simulate_full():
+    start = datetime.now(timezone.utc)
+    latest_end = start + timedelta(hours=4)
+    resources = _get_canonical_resources(start, latest_end)
         
     scenario = Scenario(
         scenario_id="simulate-full-canonical",
