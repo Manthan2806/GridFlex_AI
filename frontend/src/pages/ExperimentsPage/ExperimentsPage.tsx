@@ -56,10 +56,6 @@ function StepVisualization({ step, feederCapacityKw }: { step: HorizonStep; feed
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem", fontSize: "0.75rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Renewable: {step.renewableKwh} kWh</span>
-          <span>Demand: {step.demandKwh} kWh</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Dispatched: {step.totalDispatchedKw} kW</span>
           <span>Delivered: {step.totalDeliveredKw} kW</span>
         </div>
@@ -193,14 +189,18 @@ function ExperimentComparison({ comparison }: { comparison: HorizonSimulationRes
 }
 
 export default function ExperimentsPage() {
-  const { runHorizonSimulation, simulationResult, uiState } = useExperiments()
+  const { runHorizonSimulation, simulationResult, experimentState, uiState } = useExperiments()
   const [activeTab, setActiveTab] = useState<"feasibility" | "horizon" | "comparison" | "trust">("feasibility")
 
   const tabs = [
     { key: "feasibility" as const, label: "Feasibility" },
     { key: "horizon" as const, label: "Horizon" },
-    { key: "comparison" as const, label: "Comparison" },
-    { key: "trust" as const, label: "Trust Updates" },
+    ...(simulationResult?.comparison.baseline && simulationResult.comparison.trustAware
+      ? [{ key: "comparison" as const, label: "Comparison" }]
+      : []),
+    ...(simulationResult?.trustUpdates.length
+      ? [{ key: "trust" as const, label: "Trust Updates" }]
+      : []),
   ]
 
   return (
@@ -224,6 +224,11 @@ export default function ExperimentsPage() {
         >
           {uiState.simulationRunning ? "Running Simulation..." : "Run Horizon Simulation (POST /simulate/full)"}
         </button>
+        {experimentState.error && (
+          <p role="alert" style={{ color: "var(--color-fg-error, #991b1b)", marginTop: "0.75rem" }}>
+            {experimentState.error}. Start FastAPI on port 8000 and try again.
+          </p>
+        )}
       </div>
 
       {simulationResult && (

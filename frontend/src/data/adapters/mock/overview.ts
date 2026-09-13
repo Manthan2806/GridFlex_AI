@@ -1,4 +1,3 @@
-import type { DataAdapter } from "../types"
 import type { OverviewData } from "../../types/domain"
 import type { SimulationResult } from "../../types/domain"
 import type { HorizonSimulationResult } from "../../types/domain/experiment"
@@ -90,7 +89,7 @@ const overviewData: OverviewData = {
   ],
 }
 
-export class MockOverviewAdapter implements DataAdapter {
+export class MockOverviewAdapter {
   async getOverviewData(): Promise<OverviewData> {
     return overviewData
   }

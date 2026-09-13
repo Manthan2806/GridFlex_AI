@@ -1,4 +1,4 @@
-const isMockMode = import.meta.env.VITE_MOCK_MODE !== "false"
+const isMockMode = import.meta.env.VITE_MOCK_MODE === "true"
 
 export const getOverviewData = (): Promise<any> => {
   if (isMockMode) {

@@ -1,12 +1,12 @@
 export {
   PortfolioSnapshot,
-} from "../components/Flexibility/PortfolioSnapshot"
+} from "./PortfolioSnapshot"
 export {
   ResourceSearchFilters,
-} from "../components/Flexibility/ResourceSearchFilters"
+} from "./ResourceSearchFilters"
 export {
   ResourcePortfolioTable,
-} from "../components/Flexibility/ResourcePortfolioTable"
+} from "./ResourcePortfolioTable"
 export {
   ResourceDetailDrawer,
-} from "../components/Flexibility/ResourceDetailDrawer"
+} from "./ResourceDetailDrawer"

@@ -6,9 +6,9 @@ import { Router } from "./routes/Router"
 import "../styles/global.css"
 
 const defaultScenario = {
-  id: "DR-2026-Q3-001",
-  name: "UrjaSarathi Renewable Alignment Scenario",
-  timeHorizon: 8,
+  id: "integrated-ev-scenario",
+  name: "UrjaSarathi EV + Water Heater Prototype",
+  timeHorizon: 32,
   seed: 42,
   category: "demand_response",
   mode: "simulation" as const

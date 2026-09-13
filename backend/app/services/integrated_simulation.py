@@ -145,6 +145,8 @@ def run_integrated_simulation() -> dict:
 
     return {
         "demo_mode": True,
+        "feeder_capacity_kw": FEEDER_CAPACITY_KW,
+        "scenario": scenario.model_dump(mode="json"),
         "label": first_prediction.label,
         "release_status": first_prediction.release_status,
         "warning": "Experimental EV estimate; not approved for real grid dispatch.",

@@ -33,7 +33,7 @@ export function FlexibilityPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          setError("Unable to load flexibility resources")
+          setError("Unable to load resources from the backend. Start FastAPI on port 8000, then refresh this page.")
         }
       } finally {
         if (!cancelled) {

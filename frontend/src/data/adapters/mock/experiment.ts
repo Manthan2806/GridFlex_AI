@@ -1,6 +1,6 @@
-import type { DataAdapter } from "../types"
 import type { HorizonSimulationResult } from "../../types/domain/experiment"
 import { MockOverviewAdapter } from "./overview"
+import { MockDispatchAdapter } from "./dispatch"
 
 const mockExperimentData: HorizonSimulationResult = {
   id: "sim-experiment-2026-09-12-001",
@@ -322,7 +322,7 @@ function normalizeExperimentTotals(data: HorizonSimulationResult): HorizonSimula
   }
 }
 
-export class MockExperimentAdapter implements DataAdapter {
+export class MockExperimentAdapter {
   async getOverviewData() {
     return new MockOverviewAdapter().getOverviewData()
   }

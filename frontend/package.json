@@ -1,12 +1,12 @@
 {
-  "name": "gridflex-ai-frontend",
+  "name": "urjasarathi-frontend",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "vite --configLoader runner",
     "build": "vite build --configLoader runner",
     "preview": "vite preview --configLoader runner",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -195,7 +195,7 @@ const flexibilityResources: FlexibilityResource[] = [
   },
 ]
 
-export class MockResourcesAdapter implements DataAdapter {
+export class MockResourcesAdapter {
   async getFlexibilityResources(): Promise<FlexibilityResource[]> {
     return flexibilityResources
   }

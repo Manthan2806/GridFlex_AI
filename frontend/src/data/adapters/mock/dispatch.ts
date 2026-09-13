@@ -1,4 +1,3 @@
-import type { DataAdapter } from "../types"
 import type { Scenario } from "../../types/domain"
 import type { SimulationResult } from "../../types/domain"
 import { MockOverviewAdapter } from "./overview"
@@ -45,7 +44,7 @@ const dispatchData = {
   },
 }
 
-export class MockDispatchAdapter implements DataAdapter {
+export class MockDispatchAdapter {
   async getOverviewData() {
     return new MockOverviewAdapter().getOverviewData()
   }

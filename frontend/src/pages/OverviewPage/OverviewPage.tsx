@@ -15,6 +15,13 @@ import { spacing } from "../../styles/tokens/spacing"
 import { radii } from "../../styles/tokens/radii"
 import type { OverviewData } from "../../data/types/domain"
 
+function midpointTime(start: string, end: string) {
+  const [startHour, startMinute] = start.split(":").map(Number)
+  const [endHour, endMinute] = end.split(":").map(Number)
+  const midpoint = Math.round(((startHour * 60 + startMinute) + (endHour * 60 + endMinute)) / 2)
+  return `${String(Math.floor(midpoint / 60) % 24).padStart(2, "0")}:${String(midpoint % 60).padStart(2, "0")}`
+}
+
 function OverviewPage() {
   const dataAdapter = useDataAdapter()
   const [state, setState] = useState<"loading" | "success" | "error" | "empty">("loading")
@@ -24,31 +31,15 @@ function OverviewPage() {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      if (dataAdapter?.getOverviewData) {
-        try {
-          const result = await dataAdapter.getOverviewData()
-          if (!cancelled) {
-            setData(result)
-            setState("success")
-          }
-        } catch (e) {
-          if (!cancelled) {
-            setState("error")
-          }
+      try {
+        const result = await dataAdapter.getOverviewData()
+        if (!cancelled) {
+          setData(result)
+          setState("success")
         }
-      } else {
-        try {
-          const result = await import("../../data/adapters/mock/overview").then(
-            (m) => new m.MockOverviewAdapter().getOverviewData()
-          )
-          if (!cancelled) {
-            setData(result)
-            setState("success")
-          }
-        } catch (e) {
-          if (!cancelled) {
-            setState("error")
-          }
+      } catch {
+        if (!cancelled) {
+          setState("error")
         }
       }
     }
@@ -76,7 +67,7 @@ function OverviewPage() {
         <StateMessage
           type="error"
           title="Unable to load"
-          message="An error occurred while loading this overview."
+          message="The frontend could not reach the UrjaSarathi backend. Start FastAPI on port 8000, then refresh this page."
         />
       </main>
     )
@@ -104,6 +95,7 @@ function OverviewPage() {
     nextDispatch,
     recentActivity,
   } = data
+  const [opportunityStart = "11:00", opportunityEnd = "15:00"] = renewableOpportunity.opportunityWindow.split("-")
 
   return (
     <main className="overview-page">
@@ -146,9 +138,9 @@ function OverviewPage() {
             <Timeline
               title="Opportunity Window"
               steps={[
-                { label: "Start", value: 25, unit: "%", time: "14:00", status: "complete" },
-                { label: "Peak", value: 70, unit: "%", time: "16:00", status: "active" },
-                { label: "End", value: 100, unit: "%", time: "18:00", status: "pending" },
+                { label: "Start", value: 25, unit: "%", time: opportunityStart, status: "complete" },
+                { label: "Peak", value: 70, unit: "%", time: midpointTime(opportunityStart, opportunityEnd), status: "active" },
+                { label: "End", value: 100, unit: "%", time: opportunityEnd, status: "pending" },
               ]}
             />
             <div className="renewable-value">

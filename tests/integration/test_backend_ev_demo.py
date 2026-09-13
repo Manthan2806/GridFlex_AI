@@ -37,3 +37,17 @@ def test_simulate_endpoint_uses_experimental_ev_model():
     assert max(dispatched_by_time.values()) <= 15.0 + 1e-9
     for state in payload["trust_states"]:
         assert any(row["resource_id"] == state["resource_id"] for row in dispatch_rows)
+
+
+def test_portfolio_endpoint_exposes_both_frontend_model_channels():
+    with TestClient(app) as client:
+        response = client.get("/portfolio")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mode"] == "offline_hackathon_prototype"
+    assert payload["deployment_allowed"] is False
+    assert len(payload["ev"]["scenario"]["resources"]) == 3
+    assert len(payload["ev"]["trust_states"]) == 3
+    assert len(payload["water_heater"]["resources"]) == 5
+    assert all(row["type"] == "water_heater" for row in payload["water_heater"]["resources"])

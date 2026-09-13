@@ -123,7 +123,7 @@ export function DecisionRationale({ dispatch }: DecisionRationaleProps) {
                   color: colors.neutrals.charcoal,
                 }}
               >
-                <strong style={{ color: colors.primary }}>Trust Scores:</strong> Resources ranked by historical reliability (85-91%)
+                <strong style={{ color: colors.primary }}>Trust Limits:</strong> Every instruction is capped by the EV model's trusted kW estimate
               </li>
               <li
                 style={{
@@ -135,7 +135,7 @@ export function DecisionRationale({ dispatch }: DecisionRationaleProps) {
                   color: colors.neutrals.charcoal,
                 }}
               >
-                <strong style={{ color: colors.primary }}>Time Alignment:</strong> Dispatch window optimized for solar surplus (14:00-18:00)
+                <strong style={{ color: colors.primary }}>Time Window:</strong> {dispatch.timeWindow}
               </li>
               <li
                 style={{
@@ -147,7 +147,7 @@ export function DecisionRationale({ dispatch }: DecisionRationaleProps) {
                   color: colors.neutrals.charcoal,
                 }}
               >
-                <strong style={{ color: colors.primary }}>Grid Impact:</strong> Maximizes renewable absorption while reducing peak load
+                <strong style={{ color: colors.primary }}>Grid Safety:</strong> Aggregate EV dispatch remains inside the configured feeder limit
               </li>
             </ul>
           </div>

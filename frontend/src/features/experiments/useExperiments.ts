@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react"
+import { useCallback, useMemo, useReducer, useState } from "react"
 import { useDataAdapter } from "../../app/providers/DataAdapterProvider"
 import { ExperimentAPI } from "./experimentAPI"
-import type { HorizonSimulationResult } from "../../../data/types/domain/experiment"
+import type { HorizonSimulationResult } from "../../data/types/domain/experiment"
 import type { ExperimentState } from "./types"
 import { experimentReducer, initialExperimentUIState } from "./experimentSlice"
 
@@ -17,53 +17,31 @@ export function useExperiments() {
   const [simulationResult, setSimulationResult] = useState<HorizonSimulationResult | null>(null)
   const [uiState, uiDispatch] = useReducer(experimentReducer, initialExperimentUIState)
 
-  useEffect(() => {
-    if (experimentState.status === "idle") {
-      void loadExperiment()
-    }
-  }, [experimentState.status])
-
-  const loadExperiment = useCallback(async () => {
-    setExperimentState((prev) => ({ ...prev, status: "loading" }))
-    try {
-      const data = await api.getExperimentData()
-      setExperimentState({
-        status: "success",
-        data,
-        error: null,
-        lastFetched: Date.now(),
-      })
-      return { status: "success" as const, data, error: null, lastFetched: Date.now() }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Unable to load experiment data"
-      setExperimentState({
-        status: "error",
-        data: null,
-        error: message,
-        lastFetched: null,
-      })
-      return { status: "error" as const, data: null, error: message, lastFetched: null }
-    }
-  }, [api])
-
   const runHorizonSimulation = useCallback(async () => {
     uiDispatch({ type: "setSimulationRunning", payload: true })
+    setExperimentState((previous) => ({ ...previous, status: "loading", error: null }))
     try {
       const result = await api.runFullHorizonSimulation()
       setSimulationResult(result)
+      setExperimentState({
+        status: "success",
+        data: result,
+        error: null,
+        lastFetched: Date.now(),
+      })
       uiDispatch({ type: "setSimulationComplete", payload: true })
       uiDispatch({ type: "setSimulationRunning", payload: false })
       return result
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to run the horizon simulation"
+      setExperimentState({ status: "error", data: null, error: message, lastFetched: null })
       uiDispatch({ type: "setSimulationRunning", payload: false })
-      console.error("Horizon simulation failed:", error)
-      throw error
+      return null
     }
   }, [api])
 
   return {
     experimentState,
-    loadExperiment,
     runHorizonSimulation,
     simulationResult,
     uiState,

@@ -1,4 +1,4 @@
-"""GridFlex AI hackathon API.
+"""UrjaSarathi hackathon API.
 
 Run from the repository root with:
     uvicorn backend.app.main:app --reload --port 8000
@@ -54,7 +54,7 @@ SEED_EVS = (
     },
 )
 
-app = FastAPI(title="GridFlex AI", version="0.1.0-demo")
+app = FastAPI(title="UrjaSarathi", version="0.2.0-prototype")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -80,6 +80,22 @@ def health() -> dict:
         "status": "ok",
         "mode": "experimental_demo",
         "model_deployment_allowed": False,
+    }
+
+
+@app.get("/portfolio")
+def portfolio() -> dict:
+    """Return one non-persisted model snapshot for the operational frontend."""
+    try:
+        ev_result = run_integrated_simulation()
+        water_heater_result = run_water_heater_simulation()
+    except (EVModelIntegrationError, WaterHeaterModelIntegrationError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "mode": "offline_hackathon_prototype",
+        "deployment_allowed": False,
+        "ev": ev_result,
+        "water_heater": water_heater_result,
     }
 
 
