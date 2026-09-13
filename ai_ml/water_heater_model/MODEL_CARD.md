@@ -65,4 +65,7 @@ report and consume the same holdout again.
 The demo-only backend adapter returns the shared `TrustState` structure. Because
 the current backend resource schema lacks water-heater physical state, it uses
 recorded training medians for those missing values and lists every fallback in
-the result. Backend routing is intentionally left unchanged for team review.
+the result. The `/simulate/water-heater` prototype endpoint calls this adapter,
+persists the generated run, and exposes matching list/detail routes. Its
+delivered power is still a deterministic demo calculation, not a field
+measurement.

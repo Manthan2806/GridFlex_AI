@@ -13,9 +13,20 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import desc, select
 
-from backend.app.db import Base, EVResource, SessionLocal, SimulationRun, engine
+from backend.app.db import (
+    Base,
+    EVResource,
+    SessionLocal,
+    SimulationRun,
+    WaterHeaterSimulationRun,
+    engine,
+)
 from backend.app.integrations.ai_ml_client import EVModelIntegrationError
+from backend.app.integrations.water_heater_ml_client import (
+    WaterHeaterModelIntegrationError,
+)
 from backend.app.services.integrated_simulation import run_integrated_simulation
+from backend.app.services.water_heater_simulation import run_water_heater_simulation
 
 
 FEEDER_CAPACITY_KW = 15.0
@@ -129,6 +140,59 @@ def list_runs() -> list[dict]:
             }
             for run in runs
         ]
+
+
+@app.post("/simulate/water-heater")
+def simulate_water_heater() -> dict:
+    """Run the saved water-heater model in explicit offline prototype mode."""
+    try:
+        result = run_water_heater_simulation()
+    except WaterHeaterModelIntegrationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    run_id = str(uuid4())
+    result = {"run_id": run_id, **result}
+    with SessionLocal() as session:
+        session.add(
+            WaterHeaterSimulationRun(
+                run_id=run_id,
+                feeder_capacity_kw=float(result["feeder_capacity_kw"]),
+                total_dispatched_kw=float(result["total_dispatched_kw"]),
+                total_delivered_kw=float(result["total_delivered_kw"]),
+                results_json=json.dumps(result),
+            )
+        )
+        session.commit()
+    return result
+
+
+@app.get("/runs/water-heater")
+def list_water_heater_runs() -> list[dict]:
+    with SessionLocal() as session:
+        runs = session.scalars(
+            select(WaterHeaterSimulationRun).order_by(
+                desc(WaterHeaterSimulationRun.created_at)
+            )
+        )
+        return [
+            {
+                "run_id": run.run_id,
+                "created_at": run.created_at.isoformat(),
+                "total_dispatched_kw": round(run.total_dispatched_kw, 6),
+                "total_delivered_kw": round(run.total_delivered_kw, 6),
+            }
+            for run in runs
+        ]
+
+
+@app.get("/runs/water-heater/{run_id}")
+def get_water_heater_run(run_id: str) -> dict:
+    with SessionLocal() as session:
+        run = session.get(WaterHeaterSimulationRun, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=404, detail="Water-heater simulation run not found"
+            )
+        return json.loads(run.results_json)
 
 
 @app.get("/runs/{run_id}")
