@@ -298,7 +298,9 @@ export function ResourceDetailDrawer({
                   Actual vs. Dispatched
                 </p>
                 <p style={{ fontFamily: fonts.monospace, fontSize: fontSizes.sm, color: colors.neutrals.ink, margin: 0 }}>
-                  {Math.round(resource.historical_response * 100)}% delivered
+                  {resource.historical_response !== undefined 
+                    ? `${Math.round(resource.historical_response * 100)}% delivered`
+                    : "Data unavailable"}
                 </p>
               </div>
               <div

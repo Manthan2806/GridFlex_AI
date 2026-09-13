@@ -92,7 +92,12 @@ def test_get_resources_canonical(mock_hydrate, mock_ev_client_cls):
         assert res.state == "available"
         assert res.type == "ev"
         assert res.potential_kw is not None
+        assert res.expected_kw is not None
+        assert res.trusted_kw is not None
         assert res.confidence == 1.0
+        assert hasattr(res, "historical_response")
+        assert isinstance(res.historical_response, list)
+        assert len(res.historical_response) == 0
 
     mock_ev_client_cls.assert_called_once_with(demo_mode=True)
     mock_hydrate.assert_called_once()

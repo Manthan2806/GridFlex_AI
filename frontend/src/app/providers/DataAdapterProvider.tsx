@@ -65,7 +65,11 @@ async function createRealAdapter(): Promise<DataAdapter> {
     },
     async getFlexibilityResources() {
       try {
-        return await fetchJson<import("../../data/types/domain").FlexibilityResource[]>("/resources")
+        const resources = await fetchJson<any[]>("/resources")
+        return resources.map(r => ({
+          ...r,
+          historical_response: typeof r.historical_response === "number" ? r.historical_response : undefined
+        }))
       } catch (err) {
         if (import.meta.env.VITE_MOCK_MODE === "false") {
           throw err

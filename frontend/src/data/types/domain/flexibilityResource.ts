@@ -15,7 +15,7 @@ export interface FlexibilityResource {
   readonly deadline: string
   readonly min_power: number
   readonly max_power: number
-  readonly historical_response: number
+  readonly historical_response?: number
   readonly override_rate: number
   readonly availability_rate: number
   readonly potential_kw: number
