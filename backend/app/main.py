@@ -261,6 +261,7 @@ def get_dispatch():
         constraintCheck=constraint_check
     )
 
+@app.post("/simulate")
 @app.post("/simulate/full")
 def simulate_full():
     start = datetime.now(timezone.utc)

@@ -79,8 +79,18 @@ async function createRealAdapter(): Promise<DataAdapter> {
     },
     async runSimulation() {
       try {
-        return await fetchJson<import("../../data/types/domain").SimulationResult>("/simulate", { method: "POST" })
-      } catch {
+        const res = await fetchJson<any>("/simulate", { method: "POST" })
+        return {
+          id: res.run_id,
+          status: (res.total_delivered_kw >= res.total_dispatched_kw && res.total_dispatched_kw > 0) ? "committed" : "partial",
+          actualFlexibilityKw: res.total_delivered_kw,
+          deliveryRatio: res.total_dispatched_kw > 0 ? res.total_delivered_kw / res.total_dispatched_kw : 1,
+          timestamp: new Date().toISOString()
+        }
+      } catch (err) {
+        if (import.meta.env.VITE_MOCK_MODE === "false") {
+          throw err
+        }
         return new MockOverviewAdapter().runSimulation()
       }
     },

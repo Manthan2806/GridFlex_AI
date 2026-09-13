@@ -183,3 +183,10 @@ def test_get_dispatch_infeasible(mock_build_ctx, mock_optimizer_cls, mock_ev_cli
     assert response.constraintCheck.passed is False
     assert len(response.constraintCheck.violations) == 1
     assert response.constraintCheck.violations[0] == "Resource ev-1 missed required energy by 10.0 kWh before deadline"
+
+
+def test_simulate_route_exists():
+    from backend.app.main import app
+    routes = [route.path for route in app.routes]
+    assert "/simulate" in routes
+    assert "/simulate/full" in routes
