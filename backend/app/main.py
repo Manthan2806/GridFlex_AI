@@ -14,8 +14,6 @@ try:
 except ImportError:  # Supports `uvicorn main:app` from this directory.
     from db import Base, EVResource, SessionLocal, SimulationRun, engine
 
-
-FEEDER_CAPACITY_KW = 15.0
 SEED_EVS = (
     {
         "id": "ev-1",
@@ -65,7 +63,6 @@ def initialize_database() -> None:
             session.commit()
 
 
-
 @app.get("/runs")
 def list_runs() -> list[dict]:
     with SessionLocal() as session:
@@ -92,20 +89,94 @@ def get_run(run_id: str) -> dict:
         return {
             "run_id": run.run_id,
             "created_at": run.created_at.isoformat(),
-            "feeder_capacity_kw": rounded(run.feeder_capacity_kw),
             "total_dispatched_kw": rounded(run.total_dispatched_kw),
             "total_delivered_kw": rounded(run.total_delivered_kw),
             "results": json.loads(run.results_json),
         }
 
 
+from datetime import datetime, timedelta, timezone
+from backend.app.schemas.scenarios import Scenario
+from backend.app.domain.enums import ResourceType
+from backend.app.domain.models import FlexibilityResource
+from backend.app.schemas.runs import SimulationInput
+from backend.app.services.dispatch_service import MVPOptimizer
+from backend.app.services.trust_hydration import build_optimizer_context
+from backend.app.integrations.ai_ml_client import ExperimentalEVModelClient
+from simulation.adapter import SimulationAdapter
+
 @app.post("/simulate/full")
 def simulate_full():
-    import os, sys
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-
-    from backend.app.services.integrated_simulation import run_integrated_simulation
-    result = run_integrated_simulation()
-    return result
+    start = datetime.now(timezone.utc)
+    latest_end = start + timedelta(hours=4)
+    resources = []
+    for ev in SEED_EVS:
+        resources.append(
+            FlexibilityResource(
+                id=ev["id"],
+                type=ResourceType.EV,
+                location_id="gridflex-feeder",
+                rated_power_kw=ev["rated_power_kw"],
+                earliest_start=start,
+                latest_end=latest_end,
+                required_kwh=ev["required_kwh"],
+                minimum_kwh=0.0,
+                maximum_kwh=ev["required_kwh"],
+                minimum_duration=0,
+                maximum_duration=240,
+                deadline=latest_end,
+                min_power=0.0,
+                max_power=ev["rated_power_kw"],
+                historical_response=[],
+                override_rate=ev["override_rate"],
+                availability_rate=ev["availability_rate"],
+            )
+        )
+        
+    scenario = Scenario(
+        scenario_id="simulate-full-canonical",
+        resources=resources,
+        disruption_specs={},
+        seeds={}
+    )
+    
+    client = ExperimentalEVModelClient(demo_mode=True)
+    ctx = build_optimizer_context(client, resources, start)
+    
+    optimizer = MVPOptimizer()
+    plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
+    
+    sim_input = SimulationInput(
+        scenario=scenario,
+        initial_resource_states={},
+        renewable_demand_forecasts=[],
+        dispatch_plan=plan,
+        system_constraints={},
+    )
+    
+    adapter = SimulationAdapter()
+    sim_output = adapter.run_simulation(sim_input)
+    
+    total_dispatched_kw = sum(instruction.power_kw for instruction in plan.dispatch_plan)
+    total_delivered_kw = sum(resp.delivered_kw for resp in sim_output.actual_response)
+    
+    run_id = str(uuid4())
+    results_dict = sim_output.model_dump()
+    
+    # Exclude non-serializable datetimes or standard Pydantic dumps serialize them?
+    # model_dump() returns datetimes which json.dumps can't handle natively unless customized.
+    # Instead, we can use sim_output.model_dump_json() to get a valid JSON string directly!
+    results_json = sim_output.model_dump_json()
+    
+    with SessionLocal() as session:
+        session.add(
+            SimulationRun(
+                run_id=run_id,
+                total_dispatched_kw=total_dispatched_kw,
+                total_delivered_kw=total_delivered_kw,
+                results_json=results_json,
+            )
+        )
+        session.commit()
+    
+    return json.loads(results_json)
