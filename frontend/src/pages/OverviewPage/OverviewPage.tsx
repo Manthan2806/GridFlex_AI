@@ -107,77 +107,83 @@ function OverviewPage() {
   return (
     <main className="overview-page">
       <header className="overview-header">
-        <PageHeader title="Overview" scenario={{ ...scenario, mode: simulationMode ? "simulation" : "live" }} />
+        <PageHeader title="Overview" scenario={{ ...scenario, name: scenario.name || scenario.id, mode: simulationMode ? "simulation" : "live" } as any} />
         <SimulationModeIndicator active={isSimulationMode} />
       </header>
 
       <section className="system-snapshot">
         <SectionHeader title="System Snapshot" />
         <div className="snapshot-metrics">
-          <CapacityBar
-            value={systemSnapshot.renewableOpportunityKwh}
-            max={1000}
-            label="Renewable opportunity"
-            unit="kWh"
-            intent="primary"
-          />
+          {systemSnapshot.renewableOpportunityKwh !== undefined && (
+            <CapacityBar
+              value={systemSnapshot.renewableOpportunityKwh}
+              max={1000}
+              label="Renewable opportunity"
+              unit="kWh"
+              intent="primary"
+            />
+          )}
           <CapacityBar
             value={systemSnapshot.trustedFlexibilityKw}
-            max={500}
+            max={Math.max(500, systemSnapshot.trustedFlexibilityKw * 1.5)}
             label="Trusted flexibility"
             unit="kW"
             intent="success"
           />
-          <CapacityBar
-            value={systemSnapshot.gridHeadroomKw}
-            max={300}
-            label="Grid headroom"
-            unit="kW"
-            intent="subtle"
-          />
+          {systemSnapshot.gridHeadroomKw !== undefined && (
+            <CapacityBar
+              value={systemSnapshot.gridHeadroomKw}
+              max={300}
+              label="Grid headroom"
+              unit="kW"
+              intent="subtle"
+            />
+          )}
         </div>
       </section>
 
-      <section className="renewable-opportunity">
-        <SectionHeader title="Renewable Opportunity" subtitle="Current / near‑term renewable availability window" />
-        <div className="renewable-content">
-          <div className="renewable-info">
-            <Timeline
-              title="Opportunity Window"
-              steps={[
-                { label: "Start", value: 25, unit: "kWh", time: "00:00", status: "active" },
-                { label: "Peak", value: 70, unit: "kWh", time: "06:00", status: "active" },
-                { label: "End", value: 100, unit: "kWh", time: "12:00", status: "pending" },
-              ]}
-            />
-            <div className="renewable-value">
-              <OpportunityVis
-                opportunity={{
-                  name: renewableOpportunity.opportunityWindow,
-                  valueKw: renewableOpportunity.renewableKwh,
-                  maxKw: 1000,
-                  active: true,
-                  constraints: ["Grid capacity", "Storage level"],
-                }}
-                onChange={() => {}}
+      {renewableOpportunity && (
+        <section className="renewable-opportunity">
+          <SectionHeader title="Renewable Opportunity" subtitle="Current / near‑term renewable availability window" />
+          <div className="renewable-content">
+            <div className="renewable-info">
+              <Timeline
+                title="Opportunity Window"
+                steps={[
+                  { label: "Start", value: 25, unit: "kWh", time: "00:00", status: "active" },
+                  { label: "Peak", value: 70, unit: "kWh", time: "06:00", status: "active" },
+                  { label: "End", value: 100, unit: "kWh", time: "12:00", status: "pending" },
+                ]}
               />
+              <div className="renewable-value">
+                <OpportunityVis
+                  opportunity={{
+                    name: renewableOpportunity.opportunityWindow,
+                    valueKw: renewableOpportunity.renewableKwh,
+                    maxKw: 1000,
+                    active: true,
+                    constraints: ["Grid capacity", "Storage level"],
+                  }}
+                  onChange={() => {}}
+                />
+              </div>
+            </div>
+            <div className="renewable-visual">
+              <CapacityBar
+                value={renewableOpportunity.renewableKwh}
+                max={1000}
+                label="Renewable availability"
+                unit="kWh"
+                intent="primary"
+                visualLabel={`${Math.round(renewableOpportunity.confidence * 100)}% confidence`}
+              />
+              <p className="visual-label" style={{ marginTop: spacing.xs }}>
+                {renewableOpportunity.renewableKwh} kWh
+              </p>
             </div>
           </div>
-          <div className="renewable-visual">
-            <CapacityBar
-              value={renewableOpportunity.renewableKwh}
-              max={1000}
-              label="Renewable availability"
-              unit="kWh"
-              intent="primary"
-              visualLabel={`${Math.round(renewableOpportunity.confidence * 100)}% confidence`}
-            />
-            <p className="visual-label" style={{ marginTop: spacing.xs }}>
-              {renewableOpportunity.renewableKwh} kWh
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="flexibility-state">
         <SectionHeader title="Flexibility State" subtitle="Potential vs expected vs trusted flexibility (tonal progression)" />

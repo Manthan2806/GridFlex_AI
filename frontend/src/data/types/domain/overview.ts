@@ -8,9 +8,9 @@ export interface Scenario {
 }
 
 export interface SystemSnapshot {
-  readonly renewableOpportunityKwh: number
+  readonly renewableOpportunityKwh?: number
   readonly trustedFlexibilityKw: number
-  readonly gridHeadroomKw: number
+  readonly gridHeadroomKw?: number
 }
 
 export interface RenewableOpportunity {
@@ -61,11 +61,17 @@ export interface SimulationResult {
   readonly timestamp: string
 }
 
+export interface OverviewScenario {
+  readonly id: string
+  readonly name?: string
+  readonly mode?: "simulation" | "live"
+}
+
 export interface OverviewData {
-  readonly scenario: Scenario
+  readonly scenario: OverviewScenario
   readonly simulationMode: boolean
   readonly systemSnapshot: SystemSnapshot
-  readonly renewableOpportunity: RenewableOpportunity
+  readonly renewableOpportunity?: RenewableOpportunity
   readonly flexibilityState: FlexibilityState
   readonly nextDispatch: NextDispatch
   readonly recentActivity: RecentActivity[]

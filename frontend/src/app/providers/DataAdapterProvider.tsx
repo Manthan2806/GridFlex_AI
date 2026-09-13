@@ -35,8 +35,31 @@ async function createRealAdapter(): Promise<DataAdapter> {
   return {
     async getOverviewData() {
       try {
-        return await fetchJson<import("../../data/types/domain").OverviewData>("/overview")
-      } catch {
+        const dispatch = await fetchJson<import("../../data/types/domain/dispatch").DispatchData>("/dispatch")
+        const runs = await fetchJson<Array<{ run_id: string; created_at: string; total_dispatched_kw: number; total_delivered_kw: number }>>("/runs")
+
+        return {
+          scenario: {
+            id: dispatch.scenario.id,
+            mode: import.meta.env.VITE_MOCK_MODE !== "false" ? "simulation" : "live"
+          },
+          simulationMode: import.meta.env.VITE_MOCK_MODE !== "false",
+          systemSnapshot: {
+            trustedFlexibilityKw: dispatch.flexibility.trustedKw
+          },
+          flexibilityState: dispatch.flexibility,
+          nextDispatch: dispatch.recommendedDispatch,
+          recentActivity: runs.map(r => ({
+            id: r.run_id,
+            type: "simulation",
+            description: `Simulation run completed with ${r.total_delivered_kw} kW delivered`,
+            timestamp: r.created_at
+          }))
+        }
+      } catch (err) {
+        if (import.meta.env.VITE_MOCK_MODE === "false") {
+          throw err
+        }
         return new MockOverviewAdapter().getOverviewData()
       }
     },
