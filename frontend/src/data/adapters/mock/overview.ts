@@ -1,5 +1,7 @@
 import type { DataAdapter } from "../types"
 import type { OverviewData } from "../../types/domain"
+import type { SimulationResult } from "../../types/domain"
+import type { HorizonSimulationResult } from "../../types/domain/experiment"
 
 const overviewData: OverviewData = {
   scenario: {
@@ -116,5 +118,33 @@ export class MockOverviewAdapter implements DataAdapter {
       deliveryRatio: 1,
       timestamp: "2026-09-12T08:30:00Z",
     }
+  }
+
+  async getRuns(): Promise<Array<{ id: string; status: string; timestamp: string }>> {
+    return [
+      { id: "run-2026-09-12-001", status: "completed", timestamp: "2026-09-12T08:30:00Z" },
+    ]
+  }
+
+  async getRun(id: string): Promise<{ id: string; status: string; timestamp: string }> {
+    return { id, status: "completed", timestamp: "2026-09-12T08:30:00Z" }
+  }
+
+  async runFullSimulation(): Promise<SimulationResult> {
+    return {
+      id: "sim-2026-09-12-001",
+      status: "committed",
+      actualFlexibilityKw: 385,
+      renewableAbsorptionKwh: 1250,
+      constraintViolations: [],
+      deadlineViolations: [],
+      reboundKwh: 0,
+      deliveryRatio: 1,
+      timestamp: "2026-09-12T08:30:00Z",
+    }
+  }
+
+  async runFullHorizonSimulation(): Promise<HorizonSimulationResult> {
+    throw new Error("Overview adapter does not provide horizon simulation")
   }
 }

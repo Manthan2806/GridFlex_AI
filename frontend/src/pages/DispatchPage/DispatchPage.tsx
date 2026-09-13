@@ -20,10 +20,11 @@ export function DispatchPage() {
     dispatchState,
     runSimulation,
     simulationResult,
-    uiSlice,
+    uiState,
+    uiDispatch,
   } = useDispatch()
 
-  const { simulationRunning, simulationComplete } = uiSlice.getState()
+  const { simulationRunning, simulationComplete } = uiState
 
   const dispatchData = dispatchState.data
   const dispatchStatus = dispatchState.status
@@ -104,13 +105,13 @@ export function DispatchPage() {
         <ConstraintCheck constraints={constraintCheck} />
         <SimulationAction
           onSimulate={async () => {
-            uiSlice.setSimulationRunning(true)
+            uiDispatch({ type: "setSimulationRunning", payload: true })
             try {
               await runSimulation()
-              uiSlice.setSimulationComplete(true)
-              uiSlice.setSimulationRunning(false)
+              uiDispatch({ type: "setSimulationComplete", payload: true })
+              uiDispatch({ type: "setSimulationRunning", payload: false })
             } catch (error) {
-              uiSlice.setSimulationRunning(false)
+              uiDispatch({ type: "setSimulationRunning", payload: false })
               console.error("Simulation failed:", error)
             }
           }}
