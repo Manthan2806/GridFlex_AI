@@ -90,7 +90,7 @@ export function DispatchPage() {
         }}
       >
         <div>
-          <SectionHeader title="Dispatch" subtitle={`Scenario: ${scenario.name}`} />
+          <SectionHeader title="Dispatch" subtitle={`Scenario: ${scenario.name || scenario.id}`} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
           <SimulationModeIndicator active={isSimulationMode} />
@@ -98,7 +98,9 @@ export function DispatchPage() {
       </header>
 
       <section className="dispatch-sections">
-        <RenewableOpportunityDetail data={dispatchData} />
+        {dispatchData.renewableOpportunity && (
+          <RenewableOpportunityDetail data={dispatchData} />
+        )}
         <RelevantFlexibility flexibility={flexibility} />
         <RecommendedDispatch recommended={recommendedDispatch} />
         <DecisionRationale dispatch={recommendedDispatch} />

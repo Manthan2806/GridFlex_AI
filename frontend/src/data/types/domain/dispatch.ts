@@ -36,9 +36,14 @@ export interface ConstraintCheckResult {
   readonly passed: boolean
 }
 
+export interface DispatchScenario {
+  readonly id: string
+  readonly name?: string
+}
+
 export interface DispatchData {
-  readonly scenario: import("./overview").Scenario
-  readonly renewableOpportunity: DispatchRenewableOpportunity
+  readonly scenario: DispatchScenario
+  readonly renewableOpportunity?: DispatchRenewableOpportunity
   readonly flexibility: DispatchFlexibilityState
   readonly recommendedDispatch: RecommendedDispatch
   readonly constraintCheck: ConstraintCheckResult

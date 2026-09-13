@@ -60,7 +60,10 @@ async function createRealAdapter(): Promise<DataAdapter> {
     async getDispatchData() {
       try {
         return await fetchJson<import("../../data/types/domain/dispatch").DispatchData>("/dispatch")
-      } catch {
+      } catch (err) {
+        if (import.meta.env.VITE_MOCK_MODE === "false") {
+          throw err
+        }
         return new MockDispatchAdapter().getDispatchData()
       }
     },

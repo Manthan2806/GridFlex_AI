@@ -163,6 +163,104 @@ def get_resources():
     
     return response_list
 
+from backend.app.domain.enums import OptimizationStatus
+from backend.app.schemas.dispatch_api import (
+    DispatchResponse,
+    DispatchResponseScenario,
+    DispatchFlexibilityState,
+    RecommendedDispatch,
+    DispatchResource,
+    ConstraintCheckResult
+)
+
+@app.get("/dispatch", response_model=DispatchResponse)
+def get_dispatch():
+    start = datetime.now(timezone.utc)
+    latest_end = start + timedelta(hours=4)
+    resources = _get_canonical_resources(start, latest_end)
+    
+    scenario = Scenario(
+        scenario_id="dispatch-scenario-canonical",
+        resources=resources,
+        disruption_specs={},
+        seeds={}
+    )
+    
+    client = ExperimentalEVModelClient(demo_mode=True)
+    ctx = build_optimizer_context(client, resources, start)
+    
+    optimizer = MVPOptimizer()
+    plan = optimizer.generate_dispatch_plan(scenario, "trusted_kw", ctx)
+    
+    # Flexibility summary
+    trust_data = ctx.get("trust_data", {})
+    total_potential = sum(t.potential_kw for t in trust_data.values())
+    total_expected = sum(t.expected_kw for t in trust_data.values())
+    total_trusted = sum(t.trusted_kw for t in trust_data.values())
+    confidence = (total_trusted / total_expected) if total_expected > 0 else 0.0
+    
+    flexibility = DispatchFlexibilityState(
+        potentialKw=rounded(total_potential),
+        expectedKw=rounded(total_expected),
+        trustedKw=rounded(total_trusted),
+        confidence=rounded(confidence)
+    )
+    
+    # Recommended Dispatch
+    # Get max power per resource from instructions
+    res_power = {}
+    min_time = None
+    max_time = None
+    for inst in plan.dispatch_plan:
+        res_power[inst.resource_id] = max(res_power.get(inst.resource_id, 0.0), inst.power_kw)
+        if min_time is None or inst.time_step < min_time:
+            min_time = inst.time_step
+        if max_time is None or inst.time_step > max_time:
+            max_time = inst.time_step
+            
+    time_window = f"{min_time.isoformat()}/{max_time.isoformat()}" if min_time and max_time else f"{start.isoformat()}/{latest_end.isoformat()}"
+    
+    dispatch_resources = []
+    for r in resources:
+        dispatched_kw = res_power.get(r.id, 0.0)
+        state = "dispatched" if dispatched_kw > 0.0 else "available"
+        dispatch_resources.append(DispatchResource(
+            id=r.id,
+            name=f"{r.type.value.capitalize()} {r.id}",
+            type=r.type.value,
+            dispatchedKw=rounded(dispatched_kw),
+            state=state
+        ))
+        
+    recommended_dispatch = RecommendedDispatch(
+        id=str(uuid4()),
+        timeWindow=time_window,
+        resources=dispatch_resources,
+        totalDispatchedKw=rounded(sum(res_power.values())),
+        rationale="Canonical MVP Optimization based on trusted capacity.",
+        status="recommendation_ready" if plan.status == OptimizationStatus.FEASIBLE else "infeasible"
+    )
+    
+    # Constraint Check
+    passed = (plan.status == OptimizationStatus.FEASIBLE)
+    violations = []
+    if plan.infeasibility_report:
+        violations = [plan.infeasibility_report]
+        
+    constraint_check = ConstraintCheckResult(
+        constraints=["Canonical optimizer constraints"],
+        violations=violations,
+        deadlineViolations=[],
+        passed=passed
+    )
+    
+    return DispatchResponse(
+        scenario=DispatchResponseScenario(id=scenario.scenario_id),
+        flexibility=flexibility,
+        recommendedDispatch=recommended_dispatch,
+        constraintCheck=constraint_check
+    )
+
 @app.post("/simulate/full")
 def simulate_full():
     start = datetime.now(timezone.utc)
